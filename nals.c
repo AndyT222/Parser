@@ -18,9 +18,12 @@ typedef struct prog Program;
 
 struct variables{
     char usrwrd[MAXNUMTOKENS][MAXTOKENSIZE];
-    int usrint[MAXNUMTOKENS][MAXTOKENSIZE];
+    int wrdcount;
+
+    int usrint[MAXNUMTOKENS];
+    int intcount;
 };
-typedef struct prog Program;
+typedef struct variables Variables;
 
 void printstr(Program *p);
 void Prog(Program *p);
@@ -31,17 +34,24 @@ void makestr(Program *prog, int i, char* test);
 int checkchar(char* str, char b);
 int clearcheck(Program *prog);
 void shiftclear(Program *prog);
+
+/* Interpreter Functions */
 void printall(Program prog);
 void testing();
+void addint(Variables *usrvar, int c);
 
 int main(void)
 {
     int i, j;
     FILE *fp;
     Program prog;
+    Variables usrvar;
     char *test = malloc(sizeof(char)*MAXTOKENSIZE);
 
     prog.cw = 0;
+
+    usrvar.intcount = 0;
+    usrvar.wrdcount = 0;
 
     testing();
 
@@ -78,8 +88,11 @@ int main(void)
         /* This only checks once */
         if(prog.wds[i][0] == '"')
         {
-            makestr(&prog, i, test);
-            strcpy(prog.wds[i], test);
+            if(checkchar(prog.wds[i], '"') < 1)
+            {
+                makestr(&prog, i, test);
+                strcpy(prog.wds[i], test);
+            }
         }
 
         i++;
@@ -91,6 +104,8 @@ int main(void)
         /* Parsing */
         Prog(&prog);
         printf("Parsed OK\n");
+        printall(prog);
+        addint(&usrvar, 5);
 
     return 0;
 }
@@ -103,6 +118,13 @@ void testing()
     assert(checkchar("test",'"') == 0);
     assert(checkchar("tes9",'"') == 0);
     assert(checkchar("tes\"",'"') == 1);
+
+}
+
+void addint(Variables *usrvar, int c){
+
+    usrvar->usrint[usrvar->intcount] = c;
+    usrvar->intcount = usrvar->intcount+1;
 
 }
 
@@ -119,21 +141,23 @@ void printall(Program prog){
     }
 }
 
+/* Note only checks end char! */
 int checkchar(char* str, char b){
 
     int i = 0;
+    int count = 0;
 
     while(str[i] != '\0'){
 
         if(str[i] == b && str[i+1] == '\0')
         {
-            return 1;
+            count++;
         }
 
         i++;
     }
 
-    return 0;
+    return count;
 }
 
 int clearcheck(Program *prog){
@@ -260,7 +284,8 @@ void shiftclear(Program *prog)
 }
 
 void Prog(Program *p)
-{
+{   
+    printf("[%s]\n", p->wds[p->cw]);
 
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -291,6 +316,108 @@ void Statement(Program *p)
 {
     int linej;
 
+    if(p->wds[p->cw][0] == '$')
+    {   
+        if(p->wds[p->cw+1][0] == '=')
+        {
+            p->cw = p->cw+2;
+            return;
+        }
+
+        else
+        {
+            ERROR("Invalid assignment.");
+        }
+    }
+
+    if(p->wds[p->cw][0] == '%')
+    {   
+        if(p->wds[p->cw+1][0] == '='){
+            p->cw = p->cw+2;
+            return;
+        }
+
+        else{
+            ERROR("Invalid assignment.");
+        }
+    }
+
+        if(strsame(p->wds[p->cw], "IFEQUAL"))
+    {
+
+        if(p->wds[p->cw+1][0] == '(')
+        {   
+            p->cw = p->cw+1;
+            return;
+        }
+
+        else
+        {
+            ERROR("Opening bracket missing for IFEQUAL.");
+        }
+
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "IFGREATER"))
+    {
+
+        if(p->wds[p->cw+1][0] == '(')
+        {   
+            p->cw = p->cw+1;
+            return;
+        }
+
+        else
+        {
+            ERROR("Opening bracket missing for IFGREATER.");
+        }
+
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "SET"))
+    {
+        if(p->wds[p->cw+1][0] != '$')
+        {
+            if(p->wds[p->cw+1][0] != '%')
+            {
+                ERROR("Invalid set condition.");
+            }
+        }
+
+        p->cw = p->cw + 2;
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INNUM"))
+    {
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "FILE"))
+    {
+
+        if(p->wds[p->cw+1][0] == '"')
+        {   
+            p->cw = p->cw+1;
+            return;
+        }
+
+        else
+        {
+            ERROR("Opening bracket quotes for FILE.");
+        }
+
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "RND"))
+    {
+        p->cw = p->cw+1;
+        return;
+    }
+
     if(strsame(p->wds[p->cw], "ABORT"))
     {
         return;
@@ -306,7 +433,17 @@ void Statement(Program *p)
             ERROR("Invalid jump.");
         }
 
-        p->cw = linej;
+        p->cw = p->cw+1;
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INC"))
+    {
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "PRINTN"))
+    {
         return;
     }
     
