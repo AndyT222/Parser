@@ -6,7 +6,7 @@
 
 #define MAXNUMTOKENS 1000
 #define MAXTOKENSIZE 100
-#define PROGNAME "test1.nal"
+#define PROGNAME "test6.nal"
 #define strsame(A,B) (strcmp(A, B)==0)
 #define ERROR(PHRASE) {fprintf(stderr, "Fatal Error %s occured in %s, line %d\n", PHRASE, __FILE__, __LINE__); exit(2); }
 
@@ -30,10 +30,11 @@ void Prog(Program *p);
 void Code(Program *p);
 void Statement(Program *p);
 
-void makestr(Program *prog, int i, char* test);
+void makestr(Program *prog, int i, char* test, char x);
 int checkchar(char* str, char b);
 int clearcheck(Program *prog);
 void shiftclear(Program *prog);
+char* rot18(char* input);
 
 /* Interpreter Functions */
 void printall(Program prog);
@@ -47,9 +48,10 @@ int main(void)
     Program prog;
     Variables usrvar;
     char *test = malloc(sizeof(char)*MAXTOKENSIZE);
+    char *test2 = calloc(1, sizeof(char)*MAXTOKENSIZE);
+    char *hold = "ABCDEFG";
 
     prog.cw = 0;
-
     usrvar.intcount = 0;
     usrvar.wrdcount = 0;
 
@@ -90,7 +92,17 @@ int main(void)
         {
             if(checkchar(prog.wds[i], '"') < 1)
             {
-                makestr(&prog, i, test);
+                makestr(&prog, i, test,'"');
+                strcpy(prog.wds[i], test);
+            }
+        }
+
+        if(prog.wds[i][0] == '#')
+        {
+            if(checkchar(prog.wds[i], '#') < 1)
+            {
+                makestr(&prog, i, test,'#');
+                test = rot18(test);
                 strcpy(prog.wds[i], test);
             }
         }
@@ -99,12 +111,14 @@ int main(void)
     }
 
         printf("\n\nAFTER VALIDATION: \n");
+        
         shiftclear(&prog);
-    
-        /* Parsing */
+        printall(prog);
+
         Prog(&prog);
         printf("Parsed OK\n");
-        printall(prog);
+        
+        
         addint(&usrvar, 5);
 
     return 0;
@@ -121,15 +135,16 @@ void testing()
 
 }
 
-void addint(Variables *usrvar, int c){
+void addint(Variables *usrvar, int c)
+{
 
     usrvar->usrint[usrvar->intcount] = c;
     usrvar->intcount = usrvar->intcount+1;
 
 }
 
-void printall(Program prog){
-
+void printall(Program prog)
+{
     int i = 0;
 
     printf("PRINT ALL ELEMENTS: \n");
@@ -176,11 +191,6 @@ int clearcheck(Program *prog){
         i++;
     }
 
-    if(brace == 0 || brace > 1)
-    {
-        ERROR("No closing brace or too many closing braces detected.");
-    }
-
     i = 0;
 
     while(prog->wds[i][0] != '\0'){
@@ -211,7 +221,7 @@ int clearcheck(Program *prog){
     return 1;
 }
 
-void makestr(Program *prog, int i, char* test){
+void makestr(Program *prog, int i, char* test, char x){
 
     int j = 1;
 
@@ -219,16 +229,15 @@ void makestr(Program *prog, int i, char* test){
 
     while(j < MAXNUMTOKENS)
     {
-        if(checkchar(prog->wds[i+j],'"'))
+        if(checkchar(prog->wds[i+j],x))
         {
             sprintf(test, "%s %s", test, prog->wds[i+j]);
             strcpy(prog->wds[i], test);
             strcpy(prog->wds[i+j], "CLEARED");
-
             return;
         }
 
-        if(checkchar(prog->wds[i+j],'"') == 0)
+        if(checkchar(prog->wds[i+j],x) == 0)
         {
             sprintf(test, "%s %s", test, prog->wds[i+j]);
             strcpy(prog->wds[i+j], "CLEARED");
@@ -285,7 +294,6 @@ void shiftclear(Program *prog)
 
 void Prog(Program *p)
 {   
-    printf("[%s]\n", p->wds[p->cw]);
 
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -299,7 +307,6 @@ void Prog(Program *p)
 
 void Code(Program *p)
 {
-    printf("[%s]\n", p->wds[p->cw]);
 
     /* Recursive base case - terminates with abort or } */
     if(strsame(p->wds[p->cw], "}"))
@@ -316,6 +323,8 @@ void Statement(Program *p)
 {
     int linej;
 
+    /* Below two statements for variable 
+    assignment */
     if(p->wds[p->cw][0] == '$')
     {   
         if(p->wds[p->cw+1][0] == '=')
@@ -323,37 +332,31 @@ void Statement(Program *p)
             p->cw = p->cw+2;
             return;
         }
-
-        else
-        {
-            ERROR("Invalid assignment.");
-        }
     }
 
     if(p->wds[p->cw][0] == '%')
     {   
-        if(p->wds[p->cw+1][0] == '='){
+        if(p->wds[p->cw+1][0] == '=')
+        {
             p->cw = p->cw+2;
             return;
-        }
-
-        else{
-            ERROR("Invalid assignment.");
         }
     }
 
         if(strsame(p->wds[p->cw], "IFEQUAL"))
     {
 
-        if(p->wds[p->cw+1][0] == '(')
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
+            p->wds[p->cw+5][0] == ')' &&
+            p->wds[p->cw+6][0] == '{')
         {   
-            p->cw = p->cw+1;
+            p->cw = p->cw+6;
             return;
         }
 
         else
         {
-            ERROR("Opening bracket missing for IFEQUAL.");
+            ERROR("Error within IFEQUAL function.");
         }
 
         return;
@@ -362,9 +365,10 @@ void Statement(Program *p)
     if(strsame(p->wds[p->cw], "IFGREATER"))
     {
 
-        if(p->wds[p->cw+1][0] == '(')
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] &&
+            p->wds[p->cw+6][0] == '{')
         {   
-            p->cw = p->cw+1;
+            p->cw = p->cw+6;
             return;
         }
 
@@ -373,7 +377,6 @@ void Statement(Program *p)
             ERROR("Opening bracket missing for IFGREATER.");
         }
 
-        return;
     }
 
     if(strsame(p->wds[p->cw], "SET"))
@@ -390,9 +393,46 @@ void Statement(Program *p)
         return;
     }
 
+    if(strsame(p->wds[p->cw], "INC"))
+    {
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+        {   
+            p->cw = p->cw+3;
+            return;
+        }
+
+        else
+        {
+            ERROR("Error within INC function.");
+        }
+    }
+
+    if(strsame(p->wds[p->cw], "RND"))
+    {
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+        {   
+            p->cw = p->cw+3;
+            return;
+        }
+
+        else
+        {
+            ERROR("Error within RND function.");
+        }
+    }
+
     if(strsame(p->wds[p->cw], "INNUM"))
     {
-        return;
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+        {   
+            p->cw = p->cw+3;
+            return;
+        }
+
+        else
+        {
+            ERROR("Error within INNUM function.");
+        }
     }
 
     if(strsame(p->wds[p->cw], "FILE"))
@@ -409,12 +449,6 @@ void Statement(Program *p)
             ERROR("Opening bracket quotes for FILE.");
         }
 
-        return;
-    }
-
-    if(strsame(p->wds[p->cw], "RND"))
-    {
-        p->cw = p->cw+1;
         return;
     }
 
@@ -436,35 +470,82 @@ void Statement(Program *p)
         p->cw = p->cw+1;
         return;
     }
-
-    if(strsame(p->wds[p->cw], "INC"))
-    {
-        return;
-    }
-
-    if(strsame(p->wds[p->cw], "PRINTN"))
-    {
-        return;
-    }
     
-    if(strsame(p->wds[p->cw], "PRINT"))
+    if(strsame(p->wds[p->cw], "PRINT") || strsame(p->wds[p->cw], "PRINTN"))
     {
 
         if(p->wds[p->cw+1][0] == '"')
         {   
-            printf("[%s] - [%d] \n", p->wds[p->cw+1], p->cw+1);
             p->cw = p->cw+1;
             return;
         }
 
-        else
-        {
-            ERROR("Opening quotation missing for print statement.");
+        if(p->wds[p->cw+1][0] == '#')
+        {   
+            p->cw = p->cw+1;
+            return;
         }
+
+        ERROR("Opening quotation missing for print statement.");
 
     }
 
     ERROR("Expecting a ONE or NOUGHT ?");
+}
+
+char* rot18(char* input)
+{
+    int i = 0;
+    char* output = calloc(1,sizeof(char)*MAXTOKENSIZE);
+
+    while(input[i] != '\0')
+    {
+        if(input[i] == '#')
+        {
+            output[i] = '"';
+        }
+
+        if(isalpha(input[i]) == 0 && input[i] != '#')
+        {
+            output[i] = input[i];
+        }
+
+        if(input[i] >= '0' && input[i] <= '4')
+        {
+            output[i] = input[i] + 5;
+        }
+
+        if(input[i] >= '5' && input[i] <= '9')
+        {
+            output[i] = input[i] - 5;
+        }
+
+        /* These can be put together */
+        if(input[i] <= 'z' && input[i] > 'm')
+        {
+            output[i] = input[i] - 13;
+        }
+
+        if(input[i] >= 'a' && input[i] <= 'm')
+        {
+            output[i] = input[i] + 13;
+        }
+
+        if(input[i] <= 'Z' && input[i] > 'M')
+        {
+            output[i] = input[i] - 13;
+        }
+
+        if(input[i] >= 'A' && input[i] <= 'M')
+        {
+            output[i] = input[i] + 13;
+        }
+
+
+        i++;
+    }
+
+    return output;
 }
 
 void printstr(Program *p){
