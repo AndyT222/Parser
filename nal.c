@@ -68,7 +68,7 @@ void fileclear(char* file, Program* prog, Master* library)
 {
     FILE *fp = NULL; 
     int i;
-    char *test = malloc(sizeof(char)*MAXTOKENSIZE);
+    char *test;
     fp = fopen(file, "r");
 
     if(fp == NULL)
@@ -84,6 +84,7 @@ void fileclear(char* file, Program* prog, Master* library)
         }
     }
 
+    test = malloc(sizeof(char)*MAXTOKENSIZE);
     i = 0;
 
     while(fscanf(fp, "%s", prog->wds[i++]) == 1 && i<MAXNUMTOKENS)
@@ -109,7 +110,7 @@ void fileclear(char* file, Program* prog, Master* library)
             if(checkchar(prog->wds[i], '#') < 1)
             {
                 makestr(prog, i, test,'#');
-                test = rot18(test);
+                rot18(test);
                 strcpy(prog->wds[i], test);
             }
         }
@@ -518,7 +519,7 @@ void Statement(Program *p)
     ERROR("Expecting a ONE or NOUGHT ?");
 }
 
-char* rot18(char* input)
+void rot18(char* input)
 {
     int i = 0;
     char* output = calloc(1,sizeof(char)*MAXTOKENSIZE);
@@ -569,7 +570,8 @@ char* rot18(char* input)
         i++;
     }
 
-    return output;
+    strcpy(input, output);
+    free(output);
 }
 
 void printstr(Program *p){
