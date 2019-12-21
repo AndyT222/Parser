@@ -25,18 +25,18 @@ int dupcheck(char** filenames, char* input)
     return 0;
 }
 
-void getfiles(char** filenames, Program* prog)
+void getfiles(char** filenames, Program* prog, int* counter)
 {
-    int i = 0; static int j = 0;
+    int i = 0;
 
     while(prog->wds[i][0] != '\0')
     {
         if(strsame(prog->wds[i], "FILE") && dupcheck(filenames, prog->wds[i+1]) == 0)
         {
-            filenames[j] = prog->wds[i+1];
-            trimfiles(filenames[j]);
-            printf("RESULT IS ___ [%s] \n", filenames[j]);
-            j++;
+            filenames[*counter] = calloc(1, sizeof(char)*MAXTOKENSIZE);
+            strcpy(filenames[*counter], prog->wds[i+1]);
+            printf("GET FILES: [%d - %s] \n", *counter, filenames[*counter]);
+            *counter = *counter + 1;
         }
 
         i++;
@@ -69,6 +69,8 @@ void fileclear(char* file, Program* prog, Master* library)
     FILE *fp = NULL; 
     int i;
     char *test;
+
+    printf("\nOpening [%s] \n", file);
     fp = fopen(file, "r");
 
     if(fp == NULL)

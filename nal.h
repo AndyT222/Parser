@@ -2,7 +2,7 @@
 #define MAXTOKENSIZE 500
 #define MAXFILES 10
 
-#define PROGNAME "test1.nal"
+#define PROGNAME "escape211.nal"
 
 #define strsame(A,B) (strcmp(A, B)==0)
 #define ERROR(PHRASE) {fprintf(stderr, "Fatal Error %s occured in %s, line %d\n", PHRASE, __FILE__, __LINE__); exit(2); }
@@ -34,14 +34,14 @@ void Code(Program *p);
 void Statement(Program *p);
 
 void makestr(Program *prog, int i, char* test, char x);
-void getfiles(char** filenames, Program* prog);
+void getfiles(char** filenames, Program* prog, int* counter);
 int checkchar(char* str, char b);
 int clearcheck(Program *prog);
 void shiftclear(Program *prog);
-char* rot18(char* input);
 
+void rot18(char* input);
 void fileclear(char* file, Program* prog, Master* library);
-char* trimfiles(char* input);
+void trimfiles(char* input);
 void freeall(Master* p);
 
 /* Interpreter Functions */
