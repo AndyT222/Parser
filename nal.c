@@ -9,17 +9,20 @@
 int dupcheck(char** filenames, char* input)
 {
     int i = 0;
+    char* temp = trimfiles(input);
 
     while(filenames[i] != NULL)
     {
-        if(strsame(filenames[i], trimfiles(input)))
+        if(strsame(filenames[i], temp))
         {
+            free(temp);
             return 1;
         }
 
         i++;
     }
 
+    free(temp);
     return 0;
 }
 
