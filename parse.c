@@ -19,7 +19,6 @@ int main(void)
 
     prog.cw = 0; 
     library.filecount = 0;
-
     usrvars.intcount = 0;
     usrvars.wrdcount = 0;
 
@@ -28,7 +27,7 @@ int main(void)
 
     /* Initialise first file */
     fileclear(PROGNAME, &prog, &library, 0);
-    Prog(&library.files[0], 0, &usrvars);
+    Prog(&library.files[0], &library, 0, &usrvars);
     getfiles(c, &prog, &counter);
 
     i = 0;
@@ -37,7 +36,7 @@ int main(void)
     {
         printgetfile(c);
         fileclear(c[i], &prog, &library,0);
-        Prog(&library.files[i+1],0, &usrvars);
+        Prog(&library.files[i+1], &library, 0, &usrvars);
         getfiles(c, &prog, &counter);
         i++;
     }
@@ -46,6 +45,7 @@ int main(void)
 
     /* Free the filenames */
     i = 0;
+
     while(c[i] != NULL)
     {
         free(c[i]);

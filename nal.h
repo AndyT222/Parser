@@ -1,8 +1,10 @@
 #define MAXNUMTOKENS 1000
 #define MAXTOKENSIZE 500
+#define MAXRAND 100
 #define MAXFILES 10
 
-#define PROGNAME "test3.nal"
+#define PROGNAME "test6.nal"
+#define PROGNAME2 "test2.nal"
 
 #define strsame(A,B) (strcmp(A, B)==0)
 #define ERROR(PHRASE) {fprintf(stderr, "Fatal Error %s occured in %s, line %d\n", PHRASE, __FILE__, __LINE__); exit(2); }
@@ -27,14 +29,15 @@ typedef struct variables Variables;
 
 struct master{
     Program files[MAXFILES];
+    char filenames[MAXNUMTOKENS][MAXTOKENSIZE];
     int filecount; 
 };
 typedef struct master Master;
 
 void printstr(Program *p);
-void Prog(Program *p, int mode, Variables *usrvar);
-void Code(Program *p, int mode, Variables *usrvar);
-void Statement(Program *p, int mode, Variables *usrvar);
+void Prog(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
+void Code(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
+void Statement(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
 
 void makestr(Program *prog, int i, char* test, char x);
 void getfiles(char** filenames, Program* prog, int* counter);
@@ -44,8 +47,13 @@ void shiftclear(Program *prog);
 
 void rot18(char* input);
 void fileclear(char* file, Program* prog, Master* library, int mode);
+int findfile(Master *library, char* filename);
 void trimfiles(char* input);
 void freeall(Master* p);
+float findfloat(Variables* usrvars, char* id);
+void findclosingbrace(Program *p);
+void increment(Variables *usrvar, char* id);
+int rnd();
 
 /* Interpreter Functions */
 void printall(Program prog);

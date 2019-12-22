@@ -3,8 +3,59 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <time.h>
 
 #include "nal.h"
+
+void findclosingbrace(Program *p)
+{
+    while(p->wds[p->cw][0] != '}')
+    {
+        p->cw = p->cw+1;
+    }
+    return;
+}
+
+float findfloat(Variables* usrvars, char* id)
+{
+    int i = 0;
+
+    while (i < usrvars->intcount)
+    {
+        if(strsame(id, usrvars->intid[i]))
+        {
+            return(usrvars->usrint[i]);
+        }
+
+        i++;
+    }
+    
+    ERROR("Unable to amend intended variable.");
+}
+
+int rnd()
+{
+    int result;
+    result = rand()%MAXRAND;
+    return result;
+}
+
+int findfile(Master *library, char* filename)
+{
+    int i = 0;
+
+    while(i < library->filecount)
+    {
+        if(strsame(library->filenames[i], filename))
+        {
+            return i;
+        }
+
+        i++;
+    }
+
+    return -1;
+}
 
 int dupcheck(char** filenames, char* input)
 {
@@ -128,20 +179,19 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
     shiftclear(prog);
     fclose(fp);
 
+    strcpy(library->filenames[library->filecount], file);
+
     library->files[library->filecount] = *prog;
     library->filecount = library->filecount+1;
 
 }
 
-/* Testing of helper functions */
 void testing()
 {
-
     assert(checkchar("test", 'e') == 0);
     assert(checkchar("test",'"') == 0);
     assert(checkchar("tes9",'"') == 0);
     assert(checkchar("tes\"",'"') == 1);
-
 }
 
 void addstr(Variables *usrvar, char* id, char* c)
@@ -153,9 +203,41 @@ void addstr(Variables *usrvar, char* id, char* c)
 
 void addint(Variables *usrvar, char* id, float c)
 {
+    int i = 0;
+
+    while(i < usrvar->intcount)
+    {
+        if(strsame(id, usrvar->intid[i]))
+        {
+            usrvar->usrint[i] = c;
+            strcpy(usrvar->intid[i], id);
+            return;
+        }
+
+        i++;
+    }
+
     usrvar->usrint[usrvar->intcount] = c;
     strcpy(usrvar->intid[usrvar->intcount], id);
     usrvar->intcount = usrvar->intcount+1;
+}
+
+void increment(Variables *usrvar, char* id)
+{
+    int i = 0;
+
+    while(i < usrvar->intcount)
+    {
+        if(strsame(id, usrvar->intid[i]))
+        {
+            usrvar->usrint[i] = usrvar->usrint[i]+1;
+            return;
+        }
+
+        i++;
+    }
+
+    return;
 }
 
 void printall(Program prog)
@@ -307,10 +389,9 @@ void shiftclear(Program *prog)
 
         i++;
     }
-
 }
 
-void Prog(Program *p, int mode, Variables *usrvar)
+void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
 {   
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -319,10 +400,10 @@ void Prog(Program *p, int mode, Variables *usrvar)
 
     p->cw = p->cw + 1;
 
-    Code(p, mode, usrvar);
+    Code(p, library, mode, usrvar, newf, array);
 }
 
-void Code(Program *p, int mode, Variables *usrvar)
+void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
 {
     /* Recursive base case - terminates with abort or } */
     if(strsame(p->wds[p->cw], "}"))
@@ -335,14 +416,20 @@ void Code(Program *p, int mode, Variables *usrvar)
         return;
     }
 
-    Statement(p, mode, usrvar);
+    Statement(p, library, mode, usrvar, newf, array);
     p->cw = p->cw + 1;
-    Code(p, mode, usrvar);
+    Code(p, library, mode, usrvar, newf, array);
 }
 
-void Statement(Program *p, int mode, Variables *usrvar)
+/* Needs to be massively trimmed */
+void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
 {
     int linej;
+    int temp;
+    int hold;
+    char* buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
+    char* c = calloc(1,sizeof(char)*MAXTOKENSIZE);
+    float f; float g;
 
     /* Below two statements for variable 
     assignment */
@@ -350,7 +437,12 @@ void Statement(Program *p, int mode, Variables *usrvar)
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
+            if(mode == 1)
+            {
             addstr(usrvar, p->wds[p->cw], p->wds[p->cw+2]);
+            printf("DECLARED STR: %s %s \n", usrvar->wrdid[usrvar->wrdcount-1], usrvar->usrwrd[usrvar->wrdcount-1]);
+            }
+
             p->cw = p->cw+2;
             return;
         }
@@ -360,7 +452,12 @@ void Statement(Program *p, int mode, Variables *usrvar)
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
+            if(mode == 1)
+            {
             addint(usrvar, p->wds[p->cw], atof(p->wds[p->cw+2]));
+            printf("DECLARED FLT: %s %f \n", usrvar->intid[usrvar->intcount-1], usrvar->usrint[usrvar->intcount-1]);
+            }
+
             p->cw = p->cw+2;
             return;
         }
@@ -382,11 +479,45 @@ void Statement(Program *p, int mode, Variables *usrvar)
 
     if(strsame(p->wds[p->cw], "IFEQUAL"))
     {
-
         if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
             p->wds[p->cw+5][0] == ')' &&
             p->wds[p->cw+6][0] == '{')
         {   
+            if(mode == 1)
+            {
+                if(p->wds[p->cw+2][0] == '%')
+                { 
+                    f = findfloat(usrvar, p->wds[p->cw+2]);
+                }
+                    else
+                    {
+                        f = atof(p->wds[p->cw+2]);
+                    }
+                
+                if(p->wds[p->cw+4][0] == '%')
+                { 
+                    g = findfloat(usrvar, p->wds[p->cw+4]);
+                }
+
+                    else
+                    {
+                        g = atof(p->wds[p->cw+4]);
+                    }
+
+                if(f == g)
+                {
+                    p->cw = p->cw+6;
+                    return;
+                }
+
+                else
+                {
+                    findclosingbrace(p);
+                    return;
+                }
+
+            }
+
             p->cw = p->cw+6;
             return;
         }
@@ -401,10 +532,45 @@ void Statement(Program *p, int mode, Variables *usrvar)
 
     if(strsame(p->wds[p->cw], "IFGREATER"))
     {
-
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] &&
+        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] && p->wds[p->cw+3][0] == ',' &&
             p->wds[p->cw+6][0] == '{')
         {   
+            if(mode == 1)
+            {
+                if(p->wds[p->cw+2][0] == '%')
+                { 
+                    f = findfloat(usrvar, p->wds[p->cw+2]);
+                }
+
+                    else
+                    {
+                        f = atof(p->wds[p->cw+2]);
+                    }
+                
+                if(p->wds[p->cw+4][0] == '%')
+                { 
+                    g = findfloat(usrvar, p->wds[p->cw+4]);
+                }
+
+                    else
+                    {
+                        g = atof(p->wds[p->cw+4]);
+                    }
+
+                if(f > g)
+                {
+                    p->cw = p->cw+6;
+                    return;
+                }
+
+                else
+                {
+                    findclosingbrace(p);
+                    return;
+                }
+                
+            }
+
             p->cw = p->cw+6;
             return;
         }
@@ -429,6 +595,7 @@ void Statement(Program *p, int mode, Variables *usrvar)
         if(p->wds[p->cw+1][0] == '%')
         {
             addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
+            printf("SET: %s %f \n", usrvar->intid[usrvar->intcount-1], usrvar->usrint[usrvar->intcount-1]);
         }
 
         p->cw = p->cw + 2;
@@ -439,6 +606,11 @@ void Statement(Program *p, int mode, Variables *usrvar)
     {
         if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
         {   
+            if(mode == 1)
+            {
+                increment(usrvar, p->wds[p->cw+2]);
+            }
+
             p->cw = p->cw+3;
             return;
         }
@@ -453,6 +625,13 @@ void Statement(Program *p, int mode, Variables *usrvar)
     {
         if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
         {   
+            if(mode == 1)
+            {
+                printf("RND ");
+                temp = rnd();
+                addint(usrvar, p->wds[p->cw+2], temp);
+            }
+
             p->cw = p->cw+3;
             return;
         }
@@ -467,6 +646,15 @@ void Statement(Program *p, int mode, Variables *usrvar)
     {
         if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
         {   
+            if(mode == 1)
+            {
+                printf("INNUM: ");
+                scanf("%s", c);
+                f = atof(c);
+                addint(usrvar, p->wds[p->cw+2], f);
+                free(c);
+            }
+
             p->cw = p->cw+3;
             return;
         }
@@ -479,9 +667,28 @@ void Statement(Program *p, int mode, Variables *usrvar)
 
     if(strsame(p->wds[p->cw], "FILE"))
     {
+
+        printf("FILE ");
+
         if(p->wds[p->cw+1][0] == '"')
         {   
-            printf("OPEN: %s \n", p->wds[p->cw+1]);
+            printf("OPENING FILE: %s \n", p->wds[p->cw+1]);
+
+            if(mode == 1)
+            {
+                strcpy(buffer, p->wds[p->cw+1]);
+                trimfiles(buffer);
+                *newf = findfile(library, buffer);
+
+                printf("\n%d \n", *newf);
+                hold = p->cw+1;
+                library->files[*newf].cw = 0;
+                free(buffer);
+
+                Prog(&library->files[*newf], library, 1, usrvar, newf, array);
+                printf("\n");
+            }
+
             p->cw = p->cw+1;
             return;
         }
@@ -536,7 +743,8 @@ void Statement(Program *p, int mode, Variables *usrvar)
 
         if(p->wds[p->cw+1][0] == '"')
         {   
-            if(mode == 1){
+            if(mode == 1)
+            {
                 printf("%s\n", p->wds[p->cw+1]);
             }
 
