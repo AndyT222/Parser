@@ -64,13 +64,16 @@ void trimfiles(char* input)
     free(output);
 }
 
-void fileclear(char* file, Program* prog, Master* library)
+void fileclear(char* file, Program* prog, Master* library, int mode)
 {
     FILE *fp = NULL; 
     int i;
     char *test;
 
-    printf("\nOpening [%s] \n", file);
+    /* Just there to get rid of flags */
+    mode = mode +1;
+    mode = mode -1;
+
     fp = fopen(file, "r");
 
     if(fp == NULL)
@@ -96,6 +99,7 @@ void fileclear(char* file, Program* prog, Master* library)
 
     /* Data Validation - Tokenisation */
     i = 0;
+
     while(i< MAXNUMTOKENS)
     {
         if(prog->wds[i][0] == '"')
@@ -132,15 +136,25 @@ void fileclear(char* file, Program* prog, Master* library)
 /* Testing of helper functions */
 void testing()
 {
+
     assert(checkchar("test", 'e') == 0);
     assert(checkchar("test",'"') == 0);
     assert(checkchar("tes9",'"') == 0);
     assert(checkchar("tes\"",'"') == 1);
+
 }
 
-void addint(Variables *usrvar, int c)
+void addstr(Variables *usrvar, char* id, char* c)
+{
+    strcpy(usrvar->usrwrd[usrvar->wrdcount], c);
+    strcpy(usrvar->wrdid[usrvar->wrdcount], id);
+    usrvar->wrdcount = usrvar->wrdcount+1;
+}
+
+void addint(Variables *usrvar, char* id, float c)
 {
     usrvar->usrint[usrvar->intcount] = c;
+    strcpy(usrvar->intid[usrvar->intcount], id);
     usrvar->intcount = usrvar->intcount+1;
 }
 
@@ -223,8 +237,8 @@ int clearcheck(Program *prog)
     return 1;
 }
 
-void makestr(Program *prog, int i, char* test, char x){
-
+void makestr(Program *prog, int i, char* test, char x)
+{
     int j = 1;
 
     strcpy(test, prog->wds[i]);
@@ -296,7 +310,7 @@ void shiftclear(Program *prog)
 
 }
 
-void Prog(Program *p)
+void Prog(Program *p, int mode, Variables *usrvar)
 {   
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -305,10 +319,10 @@ void Prog(Program *p)
 
     p->cw = p->cw + 1;
 
-    Code(p);
+    Code(p, mode, usrvar);
 }
 
-void Code(Program *p)
+void Code(Program *p, int mode, Variables *usrvar)
 {
     /* Recursive base case - terminates with abort or } */
     if(strsame(p->wds[p->cw], "}"))
@@ -316,12 +330,17 @@ void Code(Program *p)
         return;
     }
 
-    Statement(p);
+    if(strsame(p->wds[p->cw], "ABORT") && mode == 1)
+    {
+        return;
+    }
+
+    Statement(p, mode, usrvar);
     p->cw = p->cw + 1;
-    Code(p);
+    Code(p, mode, usrvar);
 }
 
-void Statement(Program *p)
+void Statement(Program *p, int mode, Variables *usrvar)
 {
     int linej;
 
@@ -331,6 +350,7 @@ void Statement(Program *p)
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
+            addstr(usrvar, p->wds[p->cw], p->wds[p->cw+2]);
             p->cw = p->cw+2;
             return;
         }
@@ -340,6 +360,7 @@ void Statement(Program *p)
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
+            addint(usrvar, p->wds[p->cw], atof(p->wds[p->cw+2]));
             p->cw = p->cw+2;
             return;
         }
@@ -403,6 +424,11 @@ void Statement(Program *p)
             {
                 ERROR("Invalid set condition.");
             }
+        }
+
+        if(p->wds[p->cw+1][0] == '%')
+        {
+            addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
         }
 
         p->cw = p->cw + 2;
@@ -483,6 +509,12 @@ void Statement(Program *p)
             ERROR("Invalid jump.");
         }
 
+        if(mode == 1)
+        {
+            p->cw = linej-1;
+            return;
+        }
+
         p->cw = p->cw+1;
         return;
     }
@@ -504,6 +536,10 @@ void Statement(Program *p)
 
         if(p->wds[p->cw+1][0] == '"')
         {   
+            if(mode == 1){
+                printf("%s\n", p->wds[p->cw+1]);
+            }
+
             p->cw = p->cw+1;
             return;
         }

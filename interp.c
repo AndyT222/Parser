@@ -11,24 +11,30 @@ void printgetfile(char** temp);
 int main(void)
 {
     int i, j;
-    int counter = 0;
     Program prog;
     Master library;
     Variables usrvars;
+
     char** c = calloc(1, sizeof(char**)*MAXFILES);
+    int counter = 0;
 
     prog.cw = 0; 
     library.filecount = 0;
-
     usrvars.intcount = 0;
     usrvars.wrdcount = 0;
 
     /* Test helper functions */
     testing();
 
+    addint(&usrvars, "%D", 5);
+    printf("%s - %f \n", usrvars.intid[0], usrvars.usrint[0]);
+
+    addint(&usrvars, "%G", 9);
+    printf("%s - %f \n", usrvars.intid[1], usrvars.usrint[1]);
+
     /* Initialise first file */
-    fileclear(PROGNAME, &prog, &library, 0);
-    Prog(&library.files[0], 0, &usrvars);
+    fileclear(PROGNAME, &prog, &library, 1);
+    Prog(&library.files[0], 1, &usrvars);
     getfiles(c, &prog, &counter);
 
     i = 0;
@@ -36,13 +42,16 @@ int main(void)
     while(c[i] != NULL)
     {
         printgetfile(c);
-        fileclear(c[i], &prog, &library,0);
-        Prog(&library.files[i+1],0, &usrvars);
+        fileclear(c[i], &prog, &library,1);
+        Prog(&library.files[i+1],1, &usrvars);
         getfiles(c, &prog, &counter);
         i++;
     }
 
-    printf("\n\nParsed OK\n");
+    printf("%s - %f \n", usrvars.intid[2], usrvars.usrint[2]);
+    printf("%s - %f \n", usrvars.intid[3], usrvars.usrint[3]);
+    printf("%s - %s \n", usrvars.wrdid[0], usrvars.usrwrd[0]);
+    printf("\nParsed OK\n");
 
     /* Free the filenames */
     i = 0;
