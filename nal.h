@@ -59,3 +59,4 @@ int rnd();
 void printall(Program prog);
 void testing();
 void addint(Variables *usrvar, char* id, float c);
+void addstr(Variables *usrvar, char* id, char* c);

@@ -44,9 +44,8 @@ int main(void)
         i++;
     }
 
-    printf("WHILE LOOP PASSED \n");
     Prog(&library.files[0], &library, 1, &usrvars, &newf, array);
-    printf("%f \n", findfloat(&usrvars,"%GUESS"));
+    
     printf("\nInterpretation Finished. \n");
 
     /* Free the filenames */
