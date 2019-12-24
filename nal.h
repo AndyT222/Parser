@@ -3,7 +3,7 @@
 #define MAXRAND 100
 #define MAXFILES 10
 
-#define PROGNAME "test6.nal"
+#define PROGNAME "escape211.nal"
 #define PROGNAME2 "test2.nal"
 
 #define strsame(A,B) (strcmp(A, B)==0)
@@ -35,10 +35,11 @@ struct master{
 typedef struct master Master;
 
 void printstr(Program *p);
-void Prog(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
-void Code(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
-void Statement(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
+void Prog(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
+void Code(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
+void Statement(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
 
+void trimall(Program* prog);
 void makestr(Program *prog, int i, char* test, char x);
 void getfiles(char** filenames, Program* prog, int* counter);
 int checkchar(char* str, char b);

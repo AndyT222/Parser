@@ -11,14 +11,13 @@ void printgetfile(char** temp);
 
 int main(void)
 {
-    int i, j;
+    int i;
     Program prog;
     Master library;
     Variables usrvars;
     int newf;
 
     int counter = 0;
-    int array[MAXTOKENSIZE] = {0};
     char** c = calloc(1, sizeof(char**)*MAXFILES);
 
     srand(time(0));
@@ -44,7 +43,7 @@ int main(void)
         i++;
     }
 
-    Prog(&library.files[0], &library, 1, &usrvars, &newf, array);
+    Prog(&library.files[0], &library, 1, &usrvars, &newf);
     
     printf("\nInterpretation Finished. \n");
 

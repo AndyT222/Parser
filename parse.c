@@ -15,6 +15,7 @@ int main(void)
     Program prog;
     Master library;
     Variables usrvars;
+    int newf;
     char** c = calloc(1, sizeof(char**)*MAXFILES);
 
     prog.cw = 0; 
@@ -27,7 +28,7 @@ int main(void)
 
     /* Initialise first file */
     fileclear(PROGNAME, &prog, &library, 0);
-    Prog(&library.files[0], &library, 0, &usrvars);
+    Prog(&library.files[0], &library, 0, &usrvars, &newf);
     getfiles(c, &prog, &counter);
 
     i = 0;
@@ -36,7 +37,7 @@ int main(void)
     {
         printgetfile(c);
         fileclear(c[i], &prog, &library,0);
-        Prog(&library.files[i+1], &library, 0, &usrvars);
+        Prog(&library.files[i+1], &library, 0, &usrvars, &newf);
         getfiles(c, &prog, &counter);
         i++;
     }

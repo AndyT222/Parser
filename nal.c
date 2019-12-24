@@ -13,22 +13,24 @@ void in2str(Variables* usrvar, char* id, char* id2)
     char* buffer2 = calloc(1, sizeof(char)*MAXTOKENSIZE);
     int check1 = 0;
     int check2 = 0;
+    int i = 0;
+    
     printf("INT 2 STR \n");
     scanf("%s %s", buffer, buffer2);
-
-    int i = 0;
 
     while (i < usrvar->wrdcount)
     {
         if(strsame(id, usrvar->wrdid[i]))
         {
             strcpy(usrvar->usrwrd[i], buffer);
+            printf("ASSIGNED %s to %s \n", usrvar->usrwrd[i], usrvar->wrdid[i]);
             check1++;
         }
 
         if(strsame(id2, usrvar->wrdid[i]))
         {
             strcpy(usrvar->usrwrd[i], buffer2);
+            printf("ASSIGNED %s to %s \n", usrvar->usrwrd[i], usrvar->wrdid[i]);
             check2++;
         }
 
@@ -48,6 +50,7 @@ void in2str(Variables* usrvar, char* id, char* id2)
     free(buffer2);
     free(buffer);
 
+    return;
 }
 
 void findclosingbrace(Program *p)
@@ -72,7 +75,8 @@ float findfloat(Variables* usrvars, char* id)
 
         i++;
     }
-    
+
+  return -1;  
 }
 
 char* findstr(Variables* usrvars, char* id)
@@ -88,7 +92,8 @@ char* findstr(Variables* usrvars, char* id)
 
         i++;
     }
-    
+
+return NULL;
 }
 
 int rnd()
@@ -119,7 +124,6 @@ int dupcheck(char** filenames, char* input)
 {
     int i = 0;
     char* temp = input;
-    trimfiles(temp);
 
     while(filenames[i] != NULL)
     {
@@ -157,6 +161,14 @@ void trimfiles(char* input)
 {
     int i = 0; int j = 0;
     char* output = calloc(1, sizeof(char)*MAXTOKENSIZE);
+
+    if(input[0] == '"' && input[1] == '"')
+    {
+        output[0] = '-';
+        strcpy(input, output);
+        free(output);
+        return;
+    }
 
     while(input[i] != '\0')
     {
@@ -235,6 +247,7 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
 
     free(test);
     shiftclear(prog);
+    trimall(prog);
     fclose(fp);
 
     strcpy(library->filenames[library->filecount], file);
@@ -242,6 +255,26 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
     library->files[library->filecount] = *prog;
     library->filecount = library->filecount+1;
 
+}
+
+void trimall(Program* prog)
+{
+    int i = 0;
+    char* buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
+
+    while(i < MAXNUMTOKENS)
+    {
+        if(prog->wds[i][0] == '"')
+        {
+            strcpy(buffer, prog->wds[i]);
+            trimfiles(buffer);
+            strcpy(prog->wds[i], buffer);
+        }
+
+        i++;
+    }
+
+    free(buffer);
 }
 
 void testing()
@@ -254,8 +287,23 @@ void testing()
 
 void addstr(Variables *usrvar, char* id, char* c)
 {
+    int i = 0;
+
+    while(i < usrvar->wrdcount)
+    {
+        if(strsame(id, usrvar->wrdid[i]))
+        {
+            strcpy(usrvar->usrwrd[i], c);
+            printf("AMENDED STR: %s %s \n", usrvar->wrdid[i], usrvar->usrwrd[i]);
+            return;
+        }
+
+        i++;
+    }
+
     strcpy(usrvar->usrwrd[usrvar->wrdcount], c);
     strcpy(usrvar->wrdid[usrvar->wrdcount], id);
+    printf("ADDED STR: %s %s \n", usrvar->wrdid[usrvar->wrdcount], usrvar->usrwrd[usrvar->wrdcount]);
     usrvar->wrdcount = usrvar->wrdcount+1;
 }
 
@@ -269,6 +317,7 @@ void addint(Variables *usrvar, char* id, float c)
         {
             usrvar->usrint[i] = c;
             strcpy(usrvar->intid[i], id);
+            printf("AMENDED INT: %s %fl \n", usrvar->intid[i], usrvar->usrint[i]);
             return;
         }
 
@@ -277,6 +326,8 @@ void addint(Variables *usrvar, char* id, float c)
 
     usrvar->usrint[usrvar->intcount] = c;
     strcpy(usrvar->intid[usrvar->intcount], id);
+
+    printf("ADDED INT: %s %fl \n", usrvar->intid[usrvar->intcount], usrvar->usrint[usrvar->intcount]);
     usrvar->intcount = usrvar->intcount+1;
 }
 
@@ -379,6 +430,7 @@ int clearcheck(Program *prog)
 void makestr(Program *prog, int i, char* test, char x)
 {
     int j = 1;
+    char* buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
 
     strcpy(test, prog->wds[i]);
 
@@ -386,21 +438,25 @@ void makestr(Program *prog, int i, char* test, char x)
     {
         if(checkchar(prog->wds[i+j],x))
         {
-            sprintf(test, "%s %s", test, prog->wds[i+j]);
+            strcpy(buffer, test);
+            sprintf(test, "%s %s", buffer, prog->wds[i+j]);
             strcpy(prog->wds[i], test);
             strcpy(prog->wds[i+j], "CLEARED");
+            free(buffer);
             return;
         }
 
         if(checkchar(prog->wds[i+j],x) == 0)
         {
-            sprintf(test, "%s %s", test, prog->wds[i+j]);
+            strcpy(buffer, test);
+            sprintf(test, "%s %s", buffer, prog->wds[i+j]);
             strcpy(prog->wds[i+j], "CLEARED");
             j++;
         }
 
     }
 
+    free(buffer);
     ERROR("Unable to find closing quotes.");
 }
 
@@ -448,7 +504,7 @@ void shiftclear(Program *prog)
     }
 }
 
-void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
+void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 {   
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -457,13 +513,13 @@ void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf, i
 
     p->cw = p->cw + 1;
 
-    Code(p, library, mode, usrvar, newf, array);
+    Code(p, library, mode, usrvar, newf);
 }
 
-void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
+void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 {
     /* Recursive base case - terminates with abort or } */
-    if(strsame(p->wds[p->cw], "}") && p->wds[p->cw+1][0] != '\0')
+    if(p->wds[p->cw][0] == '}' && p->wds[p->cw+1][0] == '\0')
     {
         return;
     }
@@ -473,28 +529,34 @@ void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf, i
         return;
     }
 
-    Statement(p, library, mode, usrvar, newf, array);
+    Statement(p, library, mode, usrvar, newf);
     p->cw = p->cw + 1;
-    Code(p, library, mode, usrvar, newf, array);
+    Code(p, library, mode, usrvar, newf);
 }
 
 /* Needs to be massively trimmed */
-void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE])
+void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 {
     int linej;
     int temp;
-    int hold;
-    char* buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
-    char* c = calloc(1,sizeof(char)*MAXTOKENSIZE);
-    char* k = calloc(1,sizeof(char)*MAXTOKENSIZE);
+
+    char* buffer;
+    char* c;
+    char* k;
     float f; float g;
+
+    if(mode == 1)
+    {
+        buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
+        c = calloc(1,sizeof(char)*MAXTOKENSIZE);
+        k = calloc(1,sizeof(char)*MAXTOKENSIZE);
+    }
 
     /* Below two statements for variable 
     assignment */
 
     if(p->wds[p->cw][0] == '}')
     {
-        p->cw = p->cw+1;
         return;
     }
 
@@ -505,7 +567,6 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
             if(mode == 1)
             {
                 addstr(usrvar, p->wds[p->cw], p->wds[p->cw+2]);
-                printf("DECLARED STR: %s %s \n", usrvar->wrdid[usrvar->wrdcount-1], usrvar->usrwrd[usrvar->wrdcount-1]);
             }
 
             p->cw = p->cw+2;
@@ -560,9 +621,19 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                     f = findfloat(usrvar, p->wds[p->cw+2]);
                 }
 
+                if(isalpha(p->wds[p->cw+2][0]) == 0 && p->wds[p->cw+2][0] != '$' && p->wds[p->cw+2][0] != '%')
+                { 
+                    f = atof(p->wds[p->cw+2]);
+                }
+
                 if(p->wds[p->cw+4][0] == '%')
                 { 
                     g = findfloat(usrvar, p->wds[p->cw+4]);
+                }
+
+                if(isalpha(p->wds[p->cw+4][0]) == 0 && p->wds[p->cw+4][0] != '$' && p->wds[p->cw+4][0] != '%')
+                { 
+                    g = atof(p->wds[p->cw+4]);
                 }
 
                 /* If both are string variables */
@@ -584,12 +655,10 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                     }
                 }
 
-                if((p->wds[p->cw+2][0] == '$') && (p->wds[p->cw+4][0] == '"'))
+                if(p->wds[p->cw+2][0] == '$')
                 { 
                     k = findstr(usrvar, p->wds[p->cw+2]);
-
-                    printf("[%s] \n", k);
-                    printf("[%s] \n", p->wds[p->cw+4]);
+                    printf("COMPARING... %s & %s \n", k, p->wds[p->cw+4]);
 
                     if(strsame(k,p->wds[p->cw+4]))
                     {
@@ -604,8 +673,7 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                     }
                 }
 
-
-                if(f == g)
+                if((int) f*100 == (int) g*100)
                 {
                     p->cw = p->cw+6;
                     return;
@@ -696,13 +764,11 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
         if(p->wds[p->cw+1][0] == '%' && mode == 1)
         {
             addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
-            printf("SET: %s %f \n", usrvar->intid[usrvar->intcount-1], usrvar->usrint[usrvar->intcount-1]);
         }
 
-        if(p->wds[p->cw+1][0] == '$' & mode == 1)
+        if(p->wds[p->cw+1][0] == '$' && mode == 1)
         {
             addstr(usrvar, p->wds[p->cw+1], p->wds[p->cw+2]);
-            printf("SET: %s %s \n", usrvar->wrdid[usrvar->intcount-1], usrvar->usrwrd[usrvar->intcount-1]);
         }
 
         p->cw = p->cw + 2;
@@ -775,22 +841,17 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
     if(strsame(p->wds[p->cw], "FILE"))
     {
 
-        printf("FILE ");
-
-        if(p->wds[p->cw+1][0] == '"')
+        if(p->wds[p->cw+1][0] != '\0')
         {   
             printf("OPENING FILE: %s \n", p->wds[p->cw+1]);
 
             if(mode == 1)
             {
                 strcpy(buffer, p->wds[p->cw+1]);
-                trimfiles(buffer);
                 *newf = findfile(library, buffer);
-                hold = p->cw+1;
                 library->files[*newf].cw = 0;
                 free(buffer);
-
-                Prog(&library->files[*newf], library, 1, usrvar, newf, array);
+                Prog(&library->files[*newf], library, 1, usrvar, newf);
                 printf("\n");
             }
 
@@ -848,7 +909,6 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
 
         if(p->wds[p->cw+1][0] == '$')
         {   
-
             if(mode == 1)
             {
                 c = findstr(usrvar, p->wds[p->cw+1]);
@@ -859,27 +919,19 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
             return;
         }
 
-        if(p->wds[p->cw+1][0] == '"')
-        {   
-            if(mode == 1)
-            {
-                printf("%s\n", p->wds[p->cw+1]);
-            }
+        if(mode == 1)
+        {
+            printf("%s\n", p->wds[p->cw+1]);
+        }
 
             p->cw = p->cw+1;
             return;
-        }
-
-        if(p->wds[p->cw+1][0] == '#')
-        {   
-            p->cw = p->cw+1;
-            return;
-        }
 
         ERROR("Opening quotation missing for print statement.");
 
     }
 
+    printf("[%d] - [%s] \n", p->cw, p->wds[p->cw]);
     ERROR("Expecting a ONE or NOUGHT ?");
 }
 
