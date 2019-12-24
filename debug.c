@@ -31,6 +31,7 @@ int main(void)
     testing();
 
     /* Initialise first file */
+    printf("DEBUG VERSION. \n");
     fileclear(PROGNAME, &prog, &library, 1);
     getfiles(c, &prog, &counter);
 
@@ -45,7 +46,7 @@ int main(void)
 
     Prog(&library.files[0], &library, 1, &usrvars, &newf);
     
-    printf("\nInterpretation Finished. \n");
+    printf("\DEBUG COMPLETE. \n");
 
     /* Free the filenames */
     i = 0;
