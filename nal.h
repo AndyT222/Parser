@@ -35,9 +35,9 @@ struct master{
 typedef struct master Master;
 
 void printstr(Program *p);
-void Prog(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
-void Code(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
-void Statement(Program *p, Master* library, int mode, Variables *usrvar, int *newf);
+void Prog(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
+void Code(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
+void Statement(Program *p, Master* library, int mode, Variables *usrvar, int *newf, int array[MAXTOKENSIZE]);
 
 void trimall(Program* prog);
 void makestr(Program *prog, int i, char* test, char x);
