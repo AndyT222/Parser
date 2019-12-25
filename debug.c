@@ -46,7 +46,7 @@ int main(void)
 
     Prog(&library.files[0], &library, 1, &usrvars, &newf);
     
-    printf("\DEBUG COMPLETE. \n");
+    printf("DEBUG COMPLETE. \n");
 
     /* Free the filenames */
     i = 0;

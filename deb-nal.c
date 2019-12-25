@@ -55,11 +55,46 @@ void in2str(Variables* usrvar, char* id, char* id2)
 
 void findclosingbrace(Program *p)
 {
+    int opening = 0;
+    int closing = 0;
+
     while(p->wds[p->cw][0] != '}')
     {
+        if(p->wds[p->cw][0] == '{')
+        {
+            opening++;
+        }
+
         p->cw = p->cw+1;
     }
-    return;
+
+    if(opening == 1)
+    {
+        return;
+    }
+
+    else{
+        
+        while(closing < opening)
+        {
+            if(p->wds[p->cw][0] == '{')
+            {
+                printf("OPENING+ %d - %d \n", opening, closing);
+                opening++;
+            }
+
+            if(p->wds[p->cw][0] == '}')
+            {
+                printf("CLOSING+ %d - %d \n", opening, closing);
+                closing++;
+            }
+
+            p->cw = p->cw+1;
+        }
+
+        p->cw = p->cw-1;
+        return;
+    }
 }
 
 float findfloat(Variables* usrvars, char* id)
@@ -658,7 +693,7 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                 if(p->wds[p->cw+2][0] == '$')
                 { 
                     k = findstr(usrvar, p->wds[p->cw+2]);
-                    printf("COMPARING... %s & %s \n", k, p->wds[p->cw+4]);
+                    printf("COMPARING... (%d) %s & %s \n", p->cw, k, p->wds[p->cw+4]);
 
                     if(strsame(k,p->wds[p->cw+4]))
                     {
@@ -801,7 +836,7 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
             if(mode == 1)
             {
                 temp = rnd();
-                printf("RND GENERATED %d \n");
+                printf("RND GENERATED %d \n", temp);
                 addint(usrvar, p->wds[p->cw+2], temp);
             }
 
