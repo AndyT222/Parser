@@ -57,7 +57,7 @@ void increment(Variables *usrvar, char* id);
 int rnd();
 
 /* Interpreter Functions */
-void printall(Program prog);
+void jump(Program* p, int mode);
 void testing();
 void addint(Variables *usrvar, char* id, float c);
 void addstr(Variables *usrvar, char* id, char* c);

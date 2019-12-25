@@ -384,19 +384,6 @@ void increment(Variables *usrvar, char* id)
     return;
 }
 
-void printall(Program prog)
-{
-    int i = 0;
-
-    printf("PRINT ALL ELEMENTS: \n");
-
-    while(prog.wds[i][0] != '\0')
-    {
-        printf("[%s] [%d] \n", prog.wds[i], i);
-        i++;
-    }
-}
-
 /* Note only checks end char! */
 int checkchar(char* str, char b)
 {
@@ -572,9 +559,7 @@ void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 /* Needs to be massively trimmed */
 void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 {
-    int linej;
     int temp;
-
     char* buffer;
     char* c;
     char* k;
@@ -909,23 +894,7 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
 
     if(strsame(p->wds[p->cw], "JUMP"))
     {
-
-        linej = atoi(p->wds[p->cw+1]);
-        
-        printf("TO WORD %d \n", linej);
-
-        if(linej > MAXNUMTOKENS || linej < 0)
-        {
-            ERROR("Invalid jump.");
-        }
-
-        if(mode == 1)
-        {
-            p->cw = linej-1;
-            return;
-        }
-
-        p->cw = p->cw+1;
+        jump(p, mode);
         return;
     }
     
@@ -970,6 +939,26 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
 
     printf("[%d] - [%s] \n", p->cw, p->wds[p->cw]);
     ERROR("Expecting a ONE or NOUGHT ?");
+}
+
+void jump(Program* p, int mode)
+{
+    int linej = atoi(p->wds[p->cw+1]);
+        
+    if(linej > MAXNUMTOKENS || linej < 0)
+    {
+        ERROR("Invalid jump.");
+    }
+
+    if(mode == 1)
+    {
+        p->cw = linej-1;
+        return;
+    }
+
+    p->cw = p->cw+1;
+    return;
+
 }
 
 void rot18(char* input)
