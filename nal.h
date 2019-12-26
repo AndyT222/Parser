@@ -57,7 +57,19 @@ void increment(Variables *usrvar, char* id);
 int rnd();
 
 /* Interpreter Functions */
+
+void set(Program* p, int mode, Variables *usrvar);
 void jump(Program* p, int mode);
+void inc(Program* p, int mode, Variables *usrvar);
+void innum(Program* p, int mode, Variables *usrvar, char* c);
+void assignrnd(Program* p, int mode, Variables *usrvar);
+void assignin2str(Program* p, int mode, Variables *usrvar);
+
+void ifequal(Program* p, int mode, Variables *usrvar, char* c, char* k);
+void ifgreater(Program* p, int mode, Variables *usrvar);
+
+void file(Program* p, int mode, Variables *usrvar, int* newf, char* buffer, Master *library);
+
 void testing();
 void addint(Variables *usrvar, char* id, float c);
 void addstr(Variables *usrvar, char* id, char* c);

@@ -289,7 +289,6 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
 
     library->files[library->filecount] = *prog;
     library->filecount = library->filecount+1;
-
 }
 
 void trimall(Program* prog)
@@ -559,11 +558,10 @@ void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 /* Needs to be massively trimmed */
 void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
 {
-    int temp;
     char* buffer;
     char* c;
     char* k;
-    float f; float g;
+    float f;
 
     if(mode == 1)
     {
@@ -571,9 +569,6 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
         c = calloc(1,sizeof(char)*MAXTOKENSIZE);
         k = calloc(1,sizeof(char)*MAXTOKENSIZE);
     }
-
-    /* Below two statements for variable 
-    assignment */
 
     if(p->wds[p->cw][0] == '}')
     {
@@ -611,27 +606,137 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
 
     if(strsame(p->wds[p->cw], "IN2STR"))
     {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' && p->wds[p->cw+5][0] == ')')
+        assignin2str(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "IFEQUAL"))
+    {
+        ifequal(p,mode,usrvar,c,k);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "IFGREATER"))
+    {
+        ifgreater(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "SET"))
+    {
+        set(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INC"))
+    {
+        inc(p, mode, usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "RND"))
+    {
+        assignrnd(p, mode, usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INNUM"))
+    {
+        innum(p, mode, usrvar, c);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "FILE"))
+    {
+        file(p,mode,usrvar,newf,buffer,library);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "ABORT"))
+    {
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "JUMP"))
+    {
+        jump(p, mode);
+        return;
+    }
+    
+    if(strsame(p->wds[p->cw], "PRINT") || strsame(p->wds[p->cw], "PRINTN"))
+    {
+
+        if(p->wds[p->cw+1][0] == '%')
         {   
             if(mode == 1)
             {
-                in2str(usrvar, p->wds[p->cw+2], p->wds[p->cw+4]);
+                f = findfloat(usrvar, p->wds[p->cw+1]);
+                printf("%.2f \n", f);
             }
 
-            p->cw = p->cw+5;
+            p->cw = p->cw+1;
+            return;
+        }
+
+        if(p->wds[p->cw+1][0] == '$')
+        {   
+            if(mode == 1)
+            {
+                c = findstr(usrvar, p->wds[p->cw+1]);
+                printf("%s \n", c);
+            }
+
+            p->cw = p->cw+1;
+            return;
+        }
+
+        if(mode == 1)
+        {
+            printf("%s\n", p->wds[p->cw+1]);
+        }
+
+            p->cw = p->cw+1;
+            return;
+
+        ERROR("Opening quotation missing for print statement.");
+
+    }
+
+    printf("[%d] - [%s] \n", p->cw, p->wds[p->cw]);
+    ERROR("Expecting a ONE or NOUGHT ?");
+}
+
+void file(Program* p, int mode, Variables *usrvar, int* newf, char* buffer, Master *library)
+{
+        if(p->wds[p->cw+1][0] != '\0')
+        {   
+            printf("OPENING FILE: %s \n", p->wds[p->cw+1]);
+
+            if(mode == 1)
+            {
+                strcpy(buffer, p->wds[p->cw+1]);
+                *newf = findfile(library, buffer);
+                library->files[*newf].cw = 0;
+                free(buffer);
+                Prog(&library->files[*newf], library, 1, usrvar, newf);
+            }
+
+            p->cw = p->cw+1;
             return;
         }
 
         else
         {
-            ERROR("Error within INT2STR function.");
+            ERROR("Missing opening bracket quotes for FILE.");
         }
-    }
 
-    if(strsame(p->wds[p->cw], "IFEQUAL"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
-            p->wds[p->cw+5][0] == ')' &&
+}
+
+void ifgreater(Program* p, int mode, Variables *usrvar)
+{
+    float f; float g;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] && p->wds[p->cw+3][0] == ',' &&
             p->wds[p->cw+6][0] == '{')
         {   
             if(mode == 1)
@@ -640,6 +745,61 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                 { 
                     f = findfloat(usrvar, p->wds[p->cw+2]);
                 }
+
+                    else
+                    {
+                        f = atof(p->wds[p->cw+2]);
+                    }
+                
+                if(p->wds[p->cw+4][0] == '%')
+                { 
+                    g = findfloat(usrvar, p->wds[p->cw+4]);
+                }
+
+                    else
+                    {
+                        g = atof(p->wds[p->cw+4]);
+                    }
+
+                if(f > g)
+                {
+                    p->cw = p->cw+6;
+                    return;
+                }
+
+                else
+                {
+                    findclosingbrace(p);
+                    return;
+                }
+                
+            }
+
+            p->cw = p->cw+6;
+            return;
+        }
+
+        else
+        {
+            ERROR("Opening bracket missing for IFGREATER.");
+        }
+
+}
+
+void ifequal(Program* p, int mode, Variables *usrvar, char* c, char* k)
+{
+    float f; float g;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
+        p->wds[p->cw+5][0] == ')' &&
+         p->wds[p->cw+6][0] == '{')
+    {   
+        if(mode == 1)
+        {
+            if(p->wds[p->cw+2][0] == '%')
+            { 
+                f = findfloat(usrvar, p->wds[p->cw+2]);
+            }
 
                 if(isalpha(p->wds[p->cw+2][0]) == 0 && p->wds[p->cw+2][0] != '$' && p->wds[p->cw+2][0] != '%')
                 { 
@@ -711,234 +871,122 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
             return;
         }
 
-        else
+    else
+    {
+        ERROR("Error within IFEQUAL function.");
+    }
+
+}
+
+void set(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] != '$')
+    {
+        if(p->wds[p->cw+1][0] != '%')
         {
-            ERROR("Error within IFEQUAL function.");
+            ERROR("Invalid set condition.");
+        }
+    }
+
+    if(p->wds[p->cw+1][0] == '%' && mode == 1)
+    {
+        addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
+    }
+
+    if(p->wds[p->cw+1][0] == '$' && mode == 1)
+    {
+        addstr(usrvar, p->wds[p->cw+1], p->wds[p->cw+2]);
+    }
+
+    p->cw = p->cw + 2;
+    return;
+}
+
+void inc(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == 1)
+        {
+            increment(usrvar, p->wds[p->cw+2]);
         }
 
+        p->cw = p->cw+3;
+        return;
+        }
+
+    else
+    {
+        ERROR("Error within INC function.");
+    }
+}
+
+void assignin2str(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' && p->wds[p->cw+5][0] == ')')
+    {   
+        if(mode == 1)
+        {
+            in2str(usrvar, p->wds[p->cw+2], p->wds[p->cw+4]);
+        }
+
+        p->cw = p->cw+5;
         return;
     }
 
-    if(strsame(p->wds[p->cw], "IFGREATER"))
+    else
     {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] && p->wds[p->cw+3][0] == ',' &&
-            p->wds[p->cw+6][0] == '{')
-        {   
-            if(mode == 1)
-            {
-                if(p->wds[p->cw+2][0] == '%')
-                { 
-                    f = findfloat(usrvar, p->wds[p->cw+2]);
-                }
-
-                    else
-                    {
-                        f = atof(p->wds[p->cw+2]);
-                    }
-                
-                if(p->wds[p->cw+4][0] == '%')
-                { 
-                    g = findfloat(usrvar, p->wds[p->cw+4]);
-                }
-
-                    else
-                    {
-                        g = atof(p->wds[p->cw+4]);
-                    }
-
-                if(f > g)
-                {
-                    p->cw = p->cw+6;
-                    return;
-                }
-
-                else
-                {
-                    findclosingbrace(p);
-                    return;
-                }
-                
-            }
-
-            p->cw = p->cw+6;
-            return;
-        }
-
-        else
-        {
-            ERROR("Opening bracket missing for IFGREATER.");
-        }
-
+        ERROR("Error within INT2STR function.");
     }
+}
 
-    if(strsame(p->wds[p->cw], "SET"))
-    {
-        if(p->wds[p->cw+1][0] != '$')
+void assignrnd(Program* p, int mode, Variables *usrvar)
+{
+    int temp;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == 1)
         {
-            if(p->wds[p->cw+1][0] != '%')
-            {
-                ERROR("Invalid set condition.");
-            }
+            temp = rnd();
+            printf("RND GENERATED %d \n", temp);
+            addint(usrvar, p->wds[p->cw+2], temp);
         }
 
-        if(p->wds[p->cw+1][0] == '%' && mode == 1)
-        {
-            addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
-        }
-
-        if(p->wds[p->cw+1][0] == '$' && mode == 1)
-        {
-            addstr(usrvar, p->wds[p->cw+1], p->wds[p->cw+2]);
-        }
-
-        p->cw = p->cw + 2;
+        p->cw = p->cw+3;
         return;
-    }
-
-    if(strsame(p->wds[p->cw], "INC"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
-                increment(usrvar, p->wds[p->cw+2]);
-            }
-
-            p->cw = p->cw+3;
-            return;
         }
 
-        else
+    else
+    {
+        ERROR("Error within RND function.");
+    }
+}
+
+void innum(Program* p, int mode, Variables *usrvar, char* c)
+{
+    float f;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == 1)
         {
-            ERROR("Error within INC function.");
-        }
-    }
-
-    if(strsame(p->wds[p->cw], "RND"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
-                temp = rnd();
-                printf("RND GENERATED %d \n", temp);
-                addint(usrvar, p->wds[p->cw+2], temp);
-            }
-
-            p->cw = p->cw+3;
-            return;
-        }
-
-        else
-        {
-            ERROR("Error within RND function.");
-        }
-    }
-
-    if(strsame(p->wds[p->cw], "INNUM"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
                 printf("INNUM: ");
                 scanf("%s", c);
                 f = atof(c);
                 addint(usrvar, p->wds[p->cw+2], f);
                 free(c);
-            }
-
-            p->cw = p->cw+3;
-            return;
         }
 
-        else
-        {
-            ERROR("Error within INNUM function.");
-        }
-    }
-
-    if(strsame(p->wds[p->cw], "FILE"))
-    {
-
-        if(p->wds[p->cw+1][0] != '\0')
-        {   
-            printf("OPENING FILE: %s \n", p->wds[p->cw+1]);
-
-            if(mode == 1)
-            {
-                strcpy(buffer, p->wds[p->cw+1]);
-                *newf = findfile(library, buffer);
-                library->files[*newf].cw = 0;
-                free(buffer);
-                Prog(&library->files[*newf], library, 1, usrvar, newf);
-                printf("\n");
-            }
-
-            p->cw = p->cw+1;
-            return;
-        }
-
-        else
-        {
-            ERROR("Missing opening bracket quotes for FILE.");
-        }
-
+        p->cw = p->cw+3;
         return;
-    }
-
-    if(strsame(p->wds[p->cw], "ABORT"))
-    {
-        return;
-    }
-
-    if(strsame(p->wds[p->cw], "JUMP"))
-    {
-        jump(p, mode);
-        return;
-    }
-    
-    if(strsame(p->wds[p->cw], "PRINT") || strsame(p->wds[p->cw], "PRINTN"))
-    {
-
-        if(p->wds[p->cw+1][0] == '%')
-        {   
-            if(mode == 1)
-            {
-                f = findfloat(usrvar, p->wds[p->cw+1]);
-                printf("%.2f \n", f);
-            }
-
-            p->cw = p->cw+1;
-            return;
         }
 
-        if(p->wds[p->cw+1][0] == '$')
-        {   
-            if(mode == 1)
-            {
-                c = findstr(usrvar, p->wds[p->cw+1]);
-                printf("%s \n", c);
-            }
-
-            p->cw = p->cw+1;
-            return;
-        }
-
-        if(mode == 1)
-        {
-            printf("%s\n", p->wds[p->cw+1]);
-        }
-
-            p->cw = p->cw+1;
-            return;
-
-        ERROR("Opening quotation missing for print statement.");
-
+    else
+    {
+        ERROR("Error within INNUM function.");
     }
 
-    printf("[%d] - [%s] \n", p->cw, p->wds[p->cw]);
-    ERROR("Expecting a ONE or NOUGHT ?");
 }
 
 void jump(Program* p, int mode)
@@ -958,7 +1006,6 @@ void jump(Program* p, int mode)
 
     p->cw = p->cw+1;
     return;
-
 }
 
 void rot18(char* input)
