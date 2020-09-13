@@ -3,21 +3,22 @@
 A parser and interpreter for a text-based gaming language (Neill’s Adventure Language).
 
 ## Grammar
-The formal grammar for NAL is detailed below:
+**The formal grammar for NAL is detailed below:**
 
   &lt;PROGRAM> := "{" lt;INSTRS>
    &lt;INSTRS> := "}" |  &lt;INSTRUCT>  &lt;INSTRS>
    &lt;INSTRUCT> :=  &lt;FILE> |  &lt;ABORT> |  &lt;INPUT> |  &lt;IFCOND> |  &lt;INC> |  &lt;SET> |
    &lt;JUMP> |  &lt;PRINT> |  &lt;RND>
 
-  
+**The individual commands are covered in more detail below.** </br>
+
 Execute the instructions in file, then return here e.g. : FILE "test1.nal"
 
 &nbsp;&nbsp;&nbsp;&lt;FILE> := "FILE" &lt;STRCON>
   
 Halt/abort all execution right now!
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;ABORT> := "ABORT"
+&nbsp;&nbsp;&nbsp;&lt;ABORT> := "ABORT"
   
 Fill a number−variable with a number, or 2 string−variables with string: IN2STR ( $C, $ZER ) or INNUM ( %NV )
 
