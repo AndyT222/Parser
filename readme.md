@@ -41,7 +41,9 @@ Number should be seeded via the clock to be different on successive executions
 If condition/test is true, execute INSTRS after brace, else skip braces
 
  &lt;IFCOND> :=  &lt;IFEQUAL> "{"  &lt;INSTRS> |  &lt;IFGREATER> "{"  &lt;INSTRS>
+ 
  &lt;IFEQUAL> := "IFEQUAL" "("  &lt;VARCON> ","  &lt;VARCON> ")"
+ 
  &lt;IFGREATER> := "IFGREATER" "("  &lt;VARCON> ","  &lt;VARCON> ")"
   
 Add 1 to a number−variable e.g. : INC ( %ABC )
