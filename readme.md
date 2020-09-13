@@ -68,6 +68,6 @@ Some other helpful variable/constant rules:
 &nbsp;&nbsp;&nbsp;&lt;NUMVAR> := %[A−Z]+
  
 &nbsp;&nbsp;&nbsp;&lt;STRCON> := A plain−text string in double−quotes, e.g. "HELLO.TXT",
-or a ROT18 string in hashes e.g. #URYYB.GKG#
+or a ROT18 string in hashes e.g. &nbsp;&nbsp;&nbsp; #URYYB.GKG#
 
 &nbsp;&nbsp;&nbsp;&lt;NUMCON> := A number e.g. 14.301
