@@ -13,11 +13,11 @@ The formal grammar for NAL is detailed below:
   
 Execute the instructions in file, then return here e.g. : FILE "test1.nal"
 
-  &lt;FILE> := "FILE" &lt;STRCON>
+&nbsp;&nbsp;&lt;FILE> := "FILE" &lt;STRCON>
   
 Halt/abort all execution right now!
 
-  &lt;ABORT> := "ABORT"
+&nbsp;&nbsp;&lt;ABORT> := "ABORT"
   
 Fill a number−variable with a number, or 2 string−variables with string: IN2STR ( $C, $ZER ) or INNUM ( %NV )
 
