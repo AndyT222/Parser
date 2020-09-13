@@ -7,15 +7,58 @@
 
 #include "nal.h"
 
+int argcheck(int argc, char** argv)
+{
+   if(argv[1] == NULL || argc < 1)
+    {
+        ERROR("No filename entered.");
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+void iterate(Program* prog, Master* library, int* counter, 
+    char** c, char* masterfile)
+{
+    int i = 0;
+
+    fileclear(masterfile, prog, library);
+    getfiles(c, prog, counter);
+
+    while(c[i] != NULL)
+    {
+        fileclear(c[i], prog, library);
+        getfiles(c, prog, counter);
+        i++;
+    }
+}
+
 void in2str(Variables* usrvar, char* id, char* id2)
 {
     char* buffer = calloc(1, sizeof(char)*MAXTOKENSIZE);
     char* buffer2 = calloc(1, sizeof(char)*MAXTOKENSIZE);
-    int check1 = 0;
-    int check2 = 0;
-    int i = 0;
+    int check1 = 0; int check2 = 0; int i = 0;
     
     scanf("%s %s", buffer, buffer2);
+
+    if(buffer == NULL || buffer2 == NULL)
+    {
+        return;
+    }
+
+    if(buffer[0] == '#')
+    {
+        rot18(buffer);
+        trimfiles(buffer);
+    }
+
+    if(buffer2[0] == '#')
+    {
+        rot18(buffer2);
+        trimfiles(buffer2);
+    }
 
     while (i < usrvar->wrdcount)
     {
@@ -52,7 +95,7 @@ void in2str(Variables* usrvar, char* id, char* id2)
 
 void findclosingbrace(Program *p)
 {
-    int opening = 0;
+    int opening = 0; int closing = 0;
 
     while(p->wds[p->cw][0] != '}')
     {
@@ -70,14 +113,23 @@ void findclosingbrace(Program *p)
     }
 
     else{
-
-        p->cw = p->cw+1;
-
-        while(p->wds[p->cw][0] != '}')
+        
+        while(closing < opening)
         {
+            if(p->wds[p->cw][0] == '{')
+            {
+                opening++;
+            }
+
+            if(p->wds[p->cw][0] == '}')
+            {
+                closing++;
+            }
+
             p->cw = p->cw+1;
         }
 
+        p->cw = p->cw-1;
         return;
     }
 }
@@ -96,7 +148,7 @@ float findfloat(Variables* usrvars, char* id)
         i++;
     }
 
-  return -1;  
+    return -1;  
 }
 
 char* findstr(Variables* usrvars, char* id)
@@ -113,7 +165,7 @@ char* findstr(Variables* usrvars, char* id)
         i++;
     }
 
-return NULL;
+    return NULL;
 }
 
 int rnd()
@@ -122,7 +174,7 @@ int rnd()
     result = rand()%MAXRAND;
     return result;
 }
-
+ 
 int findfile(Master *library, char* filename)
 {
     int i = 0;
@@ -142,8 +194,7 @@ int findfile(Master *library, char* filename)
 
 int dupcheck(char** filenames, char* input)
 {
-    int i = 0;
-    char* temp = input;
+    int i = 0; char* temp = input;
 
     while(filenames[i] != NULL)
     {
@@ -164,7 +215,8 @@ void getfiles(char** filenames, Program* prog, int* counter)
 
     while(prog->wds[i][0] != '\0')
     {
-        if(strsame(prog->wds[i], "FILE") && dupcheck(filenames, prog->wds[i+1]) == 0)
+        if(strsame(prog->wds[i], "FILE") && 
+            dupcheck(filenames, prog->wds[i+1]) == 0)
         {
             filenames[*counter] = calloc(1, sizeof(char)*MAXTOKENSIZE);
             strcpy(filenames[*counter], prog->wds[i+1]);
@@ -173,17 +225,17 @@ void getfiles(char** filenames, Program* prog, int* counter)
 
         i++;
     }
-
 }
 
+ 
 void trimfiles(char* input)
 {
-    int i = 0; int j = 0;
+    int i = 0; int j = 0; 
     char* output = calloc(1, sizeof(char)*MAXTOKENSIZE);
 
     if(input[0] == '"' && input[1] == '"')
     {
-        output[0] = '-';
+        output[0] = ' ';
         strcpy(input, output);
         free(output);
         return;
@@ -204,16 +256,9 @@ void trimfiles(char* input)
     free(output);
 }
 
-void fileclear(char* file, Program* prog, Master* library, int mode)
+void fileclear(char* file, Program* prog, Master* library)
 {
-    FILE *fp = NULL; 
-    int i;
-    char *test;
-
-    /* Just there to get rid of flags */
-    mode = mode +1;
-    mode = mode -1;
-
+    FILE *fp = NULL; int i; char *test;
     fp = fopen(file, "r");
 
     if(fp == NULL)
@@ -244,7 +289,7 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
     {
         if(prog->wds[i][0] == '"')
         {
-            if(checkchar(prog->wds[i], '"') < 1)
+            if(checkendchar(prog->wds[i], '"') < 1)
             {
                 makestr(prog, i, test,'"');
                 strcpy(prog->wds[i], test);
@@ -253,11 +298,18 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
 
         if(prog->wds[i][0] == '#')
         {
-            if(checkchar(prog->wds[i], '#') < 1)
+            if(checkendchar(prog->wds[i], '#') < 1)
             {
                 makestr(prog, i, test,'#');
                 rot18(test);
                 strcpy(prog->wds[i], test);
+            }
+            else
+            {
+                if(countchars(prog->wds[i], '#') == 2)
+                {
+                    rot18(prog->wds[i]);
+                }
             }
         }
 
@@ -273,7 +325,6 @@ void fileclear(char* file, Program* prog, Master* library, int mode)
 
     library->files[library->filecount] = *prog;
     library->filecount = library->filecount+1;
-
 }
 
 void trimall(Program* prog)
@@ -296,17 +347,14 @@ void trimall(Program* prog)
     free(buffer);
 }
 
-void testing()
-{
-    assert(checkchar("test", 'e') == 0);
-    assert(checkchar("test",'"') == 0);
-    assert(checkchar("tes9",'"') == 0);
-    assert(checkchar("tes\"",'"') == 1);
-}
-
 void addstr(Variables *usrvar, char* id, char* c)
 {
     int i = 0;
+
+    if(c == NULL)
+    {
+        return;
+    }
 
     while(i < usrvar->wrdcount)
     {
@@ -321,7 +369,6 @@ void addstr(Variables *usrvar, char* id, char* c)
 
     strcpy(usrvar->usrwrd[usrvar->wrdcount], c);
     strcpy(usrvar->wrdid[usrvar->wrdcount], id);
-
     usrvar->wrdcount = usrvar->wrdcount+1;
 }
 
@@ -364,24 +411,26 @@ void increment(Variables *usrvar, char* id)
     return;
 }
 
-void printall(Program prog)
+int countchars(char* string, char c)
 {
-    int i = 0;
+  int i = 0; int count = 0;
 
-    printf("PRINT ALL ELEMENTS: \n");
+  while(string[i] != '\0')
+  {
+      if(string[i] == c)
+      {
+          count++;
+      }
 
-    while(prog.wds[i][0] != '\0')
-    {
-        printf("[%s] [%d] \n", prog.wds[i], i);
-        i++;
-    }
+      i++;
+  }
+
+return count;
 }
 
-/* Note only checks end char! */
-int checkchar(char* str, char b)
+int checkendchar(char* str, char b)
 {
-    int i = 0;
-    int count = 0;
+    int i = 0; int count = 0;
 
     while(str[i] != '\0')
     {
@@ -398,9 +447,7 @@ int checkchar(char* str, char b)
 
 int clearcheck(Program *prog)
 {
-    int i = 0;
-    int check = 0;
-    int brace = 0;
+    int i = 0; int check = 0; int brace = 0;
 
     while(prog->wds[i][0] != '\0')
     {
@@ -421,12 +468,16 @@ int clearcheck(Program *prog)
             check++;
         }
 
-        if(i < MAXNUMTOKENS-1 && strsame(prog->wds[i], "CLEARED") && (strsame(prog->wds[i+1], "CLEARED") == 0 && prog->wds[i+1][0] != '\0'))
+        if(i < MAXNUMTOKENS-1 && strsame(prog->wds[i], "CLEARED") 
+            && (strsame(prog->wds[i+1], "CLEARED") == 0 
+            && prog->wds[i+1][0] != '\0'))
         {
             return 0;
         }
 
-        if(i > 0 && strsame(prog->wds[i], "CLEARED") && (strsame(prog->wds[i-1], "CLEARED") == 0 && prog->wds[i-1][0] != '}'))
+        if(i > 0 && strsame(prog->wds[i], "CLEARED") 
+            && (strsame(prog->wds[i-1], "CLEARED") == 0 
+            && prog->wds[i-1][0] != '}'))
         {
             return 0;
         }
@@ -444,14 +495,14 @@ int clearcheck(Program *prog)
 
 void makestr(Program *prog, int i, char* test, char x)
 {
-    int j = 1;
+    int j = 1; 
     char* buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
 
     strcpy(test, prog->wds[i]);
 
     while(j < MAXNUMTOKENS)
     {
-        if(checkchar(prog->wds[i+j],x))
+        if(checkendchar(prog->wds[i+j],x))
         {
             strcpy(buffer, test);
             sprintf(test, "%s %s", buffer, prog->wds[i+j]);
@@ -461,7 +512,7 @@ void makestr(Program *prog, int i, char* test, char x)
             return;
         }
 
-        if(checkchar(prog->wds[i+j],x) == 0)
+        if(checkendchar(prog->wds[i+j],x) == 0)
         {
             strcpy(buffer, test);
             sprintf(test, "%s %s", buffer, prog->wds[i+j]);
@@ -497,7 +548,8 @@ void shiftclear(Program *prog)
             i = 0;
         }
 
-        if(strsame(prog->wds[i], "CLEARED") && prog->wds[i+1][0] != '\0')
+        if(strsame(prog->wds[i], "CLEARED") && 
+            prog->wds[i+1][0] != '\0')
         {
             swap(prog->wds[i], prog->wds[i+1]);
         }
@@ -509,7 +561,6 @@ void shiftclear(Program *prog)
 
         while(prog->wds[i][0] != '\0')
     {   
-
         if(strsame(prog->wds[i], "CLEARED"))
         {
             strcpy(prog->wds[i], "\0");
@@ -519,7 +570,8 @@ void shiftclear(Program *prog)
     }
 }
 
-void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
+void Prog(Program *p, Master *library, int mode, 
+    Variables *usrvar, int *newf)
 {   
     if(!strsame(p->wds[p->cw], "{"))
     {
@@ -531,15 +583,15 @@ void Prog(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
     Code(p, library, mode, usrvar, newf);
 }
 
-void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
+void Code(Program *p, Master *library, int mode, 
+    Variables *usrvar, int *newf)
 {
-    /* Recursive base case - terminates with abort or } */
     if(p->wds[p->cw][0] == '}' && p->wds[p->cw+1][0] == '\0')
     {
         return;
     }
 
-    if(strsame(p->wds[p->cw], "ABORT") && mode == 1)
+    if(strsame(p->wds[p->cw], "ABORT") && mode == INTERP)
     {
         return;
     }
@@ -549,39 +601,33 @@ void Code(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
     Code(p, library, mode, usrvar, newf);
 }
 
-/* Needs to be massively trimmed */
-void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *newf)
+/* This is a long function but believe it's justified as
+its primarily listing commands. */
+void Statement(Program *p, Master *library, int mode, 
+    Variables *usrvar, int *newf)
 {
-    int linej;
-    int temp;
-
-    char* buffer;
-    char* c;
-    char* k;
-    float f; float g;
-
-    if(mode == 1)
-    {
-        buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
-        c = calloc(1,sizeof(char)*MAXTOKENSIZE);
-        k = calloc(1,sizeof(char)*MAXTOKENSIZE);
-    }
-
-    /* Below two statements for variable 
-    assignment */
+    char* buffer; char* c; char* k; float f = 0;
 
     if(p->wds[p->cw][0] == '}')
     {
         return;
     }
 
+    if(mode == INTERP)
+    {
+        buffer = calloc(1,sizeof(char)*MAXTOKENSIZE);
+        c = calloc(1,sizeof(char)*MAXTOKENSIZE);
+        k = calloc(1,sizeof(char)*MAXTOKENSIZE);
+    }
+
     if(p->wds[p->cw][0] == '$')
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
-            if(mode == 1)
+            if(mode == INTERP)
             {
-                addstr(usrvar, p->wds[p->cw], p->wds[p->cw+2]);
+                addstr(usrvar, p->wds[p->cw], 
+                    p->wds[p->cw+2]);
             }
 
             p->cw = p->cw+2;
@@ -593,9 +639,10 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
     {   
         if(p->wds[p->cw+1][0] == '=')
         {
-            if(mode == 1)
+            if(mode == INTERP)
             {
-                addint(usrvar, p->wds[p->cw], atof(p->wds[p->cw+2]));
+                addint(usrvar, p->wds[p->cw], 
+                    atof(p->wds[p->cw+2]));
             }
 
             p->cw = p->cw+2;
@@ -605,37 +652,230 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
 
     if(strsame(p->wds[p->cw], "IN2STR"))
     {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' && p->wds[p->cw+5][0] == ')')
-        {   
-            if(mode == 1)
+        assignin2str(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "IFEQUAL"))
+    {
+        ifequal(p,mode,usrvar,c,k);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "IFGREATER"))
+    {
+        ifgreater(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "SET"))
+    {
+        set(p,mode,usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INC"))
+    {
+        inc(p, mode, usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "RND"))
+    {
+        assignrnd(p, mode, usrvar);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "INNUM"))
+    {
+        innum(p, mode, usrvar, c);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "FILE"))
+    {
+        file(p,mode,usrvar,newf,buffer,library);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "JUMP"))
+    {
+        jump(p, mode);
+        return;
+    }
+    
+    if(strsame(p->wds[p->cw], "PRINT") || 
+        strsame(p->wds[p->cw], "PRINTN"))
+    {
+        assignprint(p, mode, usrvar, f, c);
+        return;
+    }
+
+    if(strsame(p->wds[p->cw], "ABORT") && mode == PARSE)
+    {
+        return;
+    }
+
+    ERROR("Expecting a ONE or NOUGHT ?");
+}
+
+void assignprint(Program* p, int mode, Variables *usrvar, float f, char* c)
+{
+   if(p->wds[p->cw+1][0] == '%')
+    {   
+        if(mode == INTERP)
+        {
+            f = findfloat(usrvar, p->wds[p->cw+1]);
+
+            if(strsame(p->wds[p->cw], "PRINT"))
             {
-                in2str(usrvar, p->wds[p->cw+2], p->wds[p->cw+4]);
+                printf("%.2f \n", f);
             }
 
-            p->cw = p->cw+5;
+            else
+            {
+                printf("%.2f ", f);
+            }
+        }
+
+        p->cw = p->cw+1;
+        return;
+    }
+
+    if(p->wds[p->cw+1][0] == '$')
+    {   
+        if(mode == INTERP)
+        {
+            c = findstr(usrvar, p->wds[p->cw+1]);
+            
+            if(strsame(p->wds[p->cw], "PRINT"))
+            {
+                printf("%s \n", c);
+            }
+
+            else
+            {
+                printf("%s ", c);
+            }
+        }
+
+        p->cw = p->cw+1;
+        return;
+    }
+
+    if(mode == INTERP)
+    {
+
+        if(strsame(p->wds[p->cw], "PRINT"))
+        {
+            printf("%s \n", p->wds[p->cw+1]);
+        }
+
+        else
+        {
+            printf("%s ", p->wds[p->cw+1]);
+        }
+        
+    }
+
+    p->cw = p->cw+1;
+    return;
+}
+
+void file(Program* p, int mode, Variables *usrvar, int* newf, char* buffer, Master *library)
+{
+        if(p->wds[p->cw+1][0] != '\0')
+        {   
+            if(mode == INTERP)
+            {
+                strcpy(buffer, p->wds[p->cw+1]);
+                *newf = findfile(library, buffer);
+                library->files[*newf].cw = 0;
+                free(buffer);
+                Prog(&library->files[*newf], library, 1, usrvar, newf);
+            }
+
+            p->cw = p->cw+1;
             return;
         }
 
         else
         {
-            ERROR("Error within INT2STR function.");
+            ERROR("Missing opening bracket quotes for FILE.");
         }
-    }
 
-    if(strsame(p->wds[p->cw], "IFEQUAL"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
-            p->wds[p->cw+5][0] == ')' &&
-            p->wds[p->cw+6][0] == '{')
+}
+
+void ifgreater(Program* p, int mode, Variables *usrvar)
+{
+    float f; float g;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')'
+        && p->wds[p->cw+3][0] && p->wds[p->cw+3][0] == ',' &&
+        p->wds[p->cw+6][0] == '{')
         {   
-            if(mode == 1)
+            if(mode == INTERP)
             {
                 if(p->wds[p->cw+2][0] == '%')
                 { 
                     f = findfloat(usrvar, p->wds[p->cw+2]);
                 }
+                    else
+                    {
+                        f = atof(p->wds[p->cw+2]);
+                    }
+                
+                if(p->wds[p->cw+4][0] == '%')
+                { 
+                    g = findfloat(usrvar, p->wds[p->cw+4]);
+                }
+                    else
+                    {
+                        g = atof(p->wds[p->cw+4]);
+                    }
 
-                if(isalpha(p->wds[p->cw+2][0]) == 0 && p->wds[p->cw+2][0] != '$' && p->wds[p->cw+2][0] != '%')
+                if(f > g)
+                {
+                    p->cw = p->cw+6;
+                    return;
+                }
+
+                else
+                {
+                    findclosingbrace(p);
+                    return;
+                }
+                
+            }
+
+            p->cw = p->cw+6;
+            return;
+        }
+
+        else
+        {
+            ERROR("Opening bracket missing for IFGREATER.");
+        }
+
+}
+
+void ifequal(Program* p, int mode, Variables *usrvar, char* c, char* k)
+{
+    float f; float g;
+
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' &&
+        p->wds[p->cw+5][0] == ')' &&
+         p->wds[p->cw+6][0] == '{')
+    {   
+        if(mode == INTERP)
+        {
+            if(p->wds[p->cw+2][0] == '%')
+            { 
+                f = findfloat(usrvar, p->wds[p->cw+2]);
+            }
+                if(isalpha(p->wds[p->cw+2][0]) == 0 && 
+                    p->wds[p->cw+2][0] != '$' && 
+                    p->wds[p->cw+2][0] != '%')
                 { 
                     f = atof(p->wds[p->cw+2]);
                 }
@@ -645,13 +885,16 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                     g = findfloat(usrvar, p->wds[p->cw+4]);
                 }
 
-                if(isalpha(p->wds[p->cw+4][0]) == 0 && p->wds[p->cw+4][0] != '$' && p->wds[p->cw+4][0] != '%')
+                if(isalpha(p->wds[p->cw+4][0]) == 0 && 
+                    p->wds[p->cw+4][0] != '$' &&
+                    p->wds[p->cw+4][0] != '%')
                 { 
                     g = atof(p->wds[p->cw+4]);
                 }
 
                 /* If both are string variables */
-                if((p->wds[p->cw+4][0] == '$') && (p->wds[p->cw+2][0] == '$'))
+                if((p->wds[p->cw+4][0] == '$') && 
+                    (p->wds[p->cw+2][0] == '$'))
                 { 
                     k = findstr(usrvar, p->wds[p->cw+2]);
                     c = findstr(usrvar, p->wds[p->cw+4]);
@@ -686,7 +929,7 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
                     }
                 }
 
-                if((int) f*100 == (int) g*100)
+                if((int) f*HUNDRED == (int) g*HUNDRED)
                 {
                     p->cw = p->cw+6;
                     return;
@@ -704,250 +947,149 @@ void Statement(Program *p, Master *library, int mode, Variables *usrvar, int *ne
             return;
         }
 
-        else
+    else
+    {
+        ERROR("Error within IFEQUAL function.");
+    }
+
+}
+
+void set(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] != '$')
+    {
+        if(p->wds[p->cw+1][0] != '%')
         {
-            ERROR("Error within IFEQUAL function.");
+            ERROR("Invalid set condition.");
+        }
+    }
+
+    if(p->wds[p->cw+1][0] == '%' && mode == INTERP)
+    {
+        addint(usrvar, p->wds[p->cw+1], 
+            atof(p->wds[p->cw+2]));
+    }
+
+    if(p->wds[p->cw+1][0] == '$' && mode == INTERP)
+    {
+        addstr(usrvar, p->wds[p->cw+1], p->wds[p->cw+2]);
+    }
+
+    p->cw = p->cw + 2;
+    return;
+}
+
+void inc(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] == '(' && 
+        p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == INTERP)
+        {
+            increment(usrvar, p->wds[p->cw+2]);
         }
 
+        p->cw = p->cw+3;
+        return;
+        }
+
+    else
+    {
+        ERROR("Error within INC function.");
+    }
+}
+
+void assignin2str(Program* p, int mode, Variables *usrvar)
+{
+    if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ',' 
+        && p->wds[p->cw+5][0] == ')')
+    {   
+        if(mode == INTERP)
+        {
+            in2str(usrvar, p->wds[p->cw+2], p->wds[p->cw+4]);
+        }
+
+        p->cw = p->cw+5;
         return;
     }
 
-    if(strsame(p->wds[p->cw], "IFGREATER"))
+    else
     {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+5][0] == ')' && p->wds[p->cw+3][0] && p->wds[p->cw+3][0] == ',' &&
-            p->wds[p->cw+6][0] == '{')
-        {   
-            if(mode == 1)
-            {
-                if(p->wds[p->cw+2][0] == '%')
-                { 
-                    f = findfloat(usrvar, p->wds[p->cw+2]);
-                }
-
-                    else
-                    {
-                        f = atof(p->wds[p->cw+2]);
-                    }
-                
-                if(p->wds[p->cw+4][0] == '%')
-                { 
-                    g = findfloat(usrvar, p->wds[p->cw+4]);
-                }
-
-                    else
-                    {
-                        g = atof(p->wds[p->cw+4]);
-                    }
-
-                if(f > g)
-                {
-                    p->cw = p->cw+6;
-                    return;
-                }
-
-                else
-                {
-                    findclosingbrace(p);
-                    return;
-                }
-                
-            }
-
-            p->cw = p->cw+6;
-            return;
-        }
-
-        else
-        {
-            ERROR("Opening bracket missing for IFGREATER.");
-        }
-
+        ERROR("Error within INT2STR function.");
     }
+}
 
-    if(strsame(p->wds[p->cw], "SET"))
-    {
-        if(p->wds[p->cw+1][0] != '$')
+void assignrnd(Program* p, int mode, Variables *usrvar)
+{
+    int temp;
+
+    if(p->wds[p->cw+1][0] == '(' && 
+        p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == INTERP)
         {
-            if(p->wds[p->cw+1][0] != '%')
-            {
-                ERROR("Invalid set condition.");
-            }
+            temp = rnd();
+            addint(usrvar, p->wds[p->cw+2], temp);
         }
 
-        if(p->wds[p->cw+1][0] == '%' && mode == 1)
-        {
-            addint(usrvar, p->wds[p->cw+1], atof(p->wds[p->cw+2]));
-        }
-
-        if(p->wds[p->cw+1][0] == '$' && mode == 1)
-        {
-            addstr(usrvar, p->wds[p->cw+1], p->wds[p->cw+2]);
-        }
-
-        p->cw = p->cw + 2;
+        p->cw = p->cw+3;
         return;
-    }
-
-    if(strsame(p->wds[p->cw], "INC"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
-                increment(usrvar, p->wds[p->cw+2]);
-            }
-
-            p->cw = p->cw+3;
-            return;
         }
 
-        else
+    else
+    {
+        ERROR("Error within RND function.");
+    }
+}
+
+void innum(Program* p, int mode, Variables *usrvar, char* c)
+{
+    float f;
+
+    if(p->wds[p->cw+1][0] == '(' && 
+        p->wds[p->cw+3][0] == ')')
+    {   
+        if(mode == INTERP)
         {
-            ERROR("Error within INC function.");
-        }
-    }
-
-    if(strsame(p->wds[p->cw], "RND"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
-                temp = rnd();
-                addint(usrvar, p->wds[p->cw+2], temp);
-            }
-
-            p->cw = p->cw+3;
-            return;
-        }
-
-        else
-        {
-            ERROR("Error within RND function.");
-        }
-    }
-
-    if(strsame(p->wds[p->cw], "INNUM"))
-    {
-        if(p->wds[p->cw+1][0] == '(' && p->wds[p->cw+3][0] == ')')
-        {   
-            if(mode == 1)
-            {
                 scanf("%s", c);
                 f = atof(c);
                 addint(usrvar, p->wds[p->cw+2], f);
                 free(c);
-            }
-
-            p->cw = p->cw+3;
-            return;
         }
 
-        else
-        {
-            ERROR("Error within INNUM function.");
+        p->cw = p->cw+3;
+        return;
         }
+
+    else
+    {
+        ERROR("Error within INNUM function.");
     }
 
-    if(strsame(p->wds[p->cw], "FILE"))
+}
+
+void jump(Program* p, int mode)
+{
+    int linej = atoi(p->wds[p->cw+1]);
+        
+    if(linej > MAXNUMTOKENS || linej < 0)
     {
+        ERROR("Invalid jump.");
+    }
 
-        if(p->wds[p->cw+1][0] != '\0')
-        {   
-
-            if(mode == 1)
-            {
-                strcpy(buffer, p->wds[p->cw+1]);
-                *newf = findfile(library, buffer);
-                library->files[*newf].cw = 0;
-                free(buffer);
-                Prog(&library->files[*newf], library, 1, usrvar, newf);
-            }
-
-            p->cw = p->cw+1;
-            return;
-        }
-
-        else
-        {
-            ERROR("Missing opening bracket quotes for FILE.");
-        }
-
+    if(mode == INTERP)
+    {
+        p->cw = linej-1;
         return;
     }
 
-    if(strsame(p->wds[p->cw], "ABORT"))
-    {
-        return;
-    }
-
-    if(strsame(p->wds[p->cw], "JUMP"))
-    {
-
-        linej = atoi(p->wds[p->cw+1]);
-
-        if(linej > MAXNUMTOKENS || linej < 0)
-        {
-            ERROR("Invalid jump.");
-        }
-
-        if(mode == 1)
-        {
-            p->cw = linej-1;
-            return;
-        }
-
-        p->cw = p->cw+1;
-        return;
-    }
-    
-    if(strsame(p->wds[p->cw], "PRINT") || strsame(p->wds[p->cw], "PRINTN"))
-    {
-
-        if(p->wds[p->cw+1][0] == '%')
-        {   
-            if(mode == 1)
-            {
-                f = findfloat(usrvar, p->wds[p->cw+1]);
-                printf("%.2f \n", f);
-            }
-
-            p->cw = p->cw+1;
-            return;
-        }
-
-        if(p->wds[p->cw+1][0] == '$')
-        {   
-            if(mode == 1)
-            {
-                c = findstr(usrvar, p->wds[p->cw+1]);
-                printf("%s \n", c);
-            }
-
-            p->cw = p->cw+1;
-            return;
-        }
-
-        if(mode == 1)
-        {
-            printf("%s\n", p->wds[p->cw+1]);
-        }
-
-            p->cw = p->cw+1;
-            return;
-
-        ERROR("Opening quotation missing for print statement.");
-
-    }
-
-    printf("[%d] - [%s] \n", p->cw, p->wds[p->cw]);
-    ERROR("Expecting a ONE or NOUGHT ?");
+    p->cw = p->cw+1;
+    return;
 }
 
 void rot18(char* input)
 {
-    int i = 0;
-    char* output = calloc(1,sizeof(char)*MAXTOKENSIZE);
+    int i = 0; char* output = calloc(1,sizeof(char)*MAXTOKENSIZE);
 
     while(input[i] != '\0')
     {
@@ -971,23 +1113,14 @@ void rot18(char* input)
             output[i] = input[i] - 5;
         }
 
-        /* These can be put together */
-        if(input[i] <= 'z' && input[i] > 'm')
+        if((input[i] <= 'z' && input[i] > 'm') || 
+            (input[i] <= 'Z' && input[i] > 'M'))
         {
             output[i] = input[i] - 13;
         }
 
-        if(input[i] >= 'a' && input[i] <= 'm')
-        {
-            output[i] = input[i] + 13;
-        }
-
-        if(input[i] <= 'Z' && input[i] > 'M')
-        {
-            output[i] = input[i] - 13;
-        }
-
-        if(input[i] >= 'A' && input[i] <= 'M')
+        if((input[i] >= 'a' && input[i] <= 'm') || 
+            (input[i] >= 'A' && input[i] <= 'M'))
         {
             output[i] = input[i] + 13;
         }
@@ -999,27 +1132,65 @@ void rot18(char* input)
     free(output);
 }
 
-void printstr(Program *p){
+void freeall(char** c)
+{
+    int i = 0;
 
-    int i = 1;
-
-    while(p->wds[p->cw][i] != '"')
-    {   
-        if(isalpha(p->wds[p->cw][i]))
-        {
-            printf("%c", p->wds[p->cw][i]);
-        }
-
-        if(p->wds[p->cw][i] == ' ')
-        {
-            p->cw = p->cw + 1;
-            printf(" %c", p->wds[p->cw][i]);
-        }
-
+    while(c[i] != NULL)
+    {
+        free(c[i]);
         i++;
     }
 
-    printf("\n");
+}
 
-    return;
+void testing()
+{
+    int i; int j;
+    char word[8] = "#Neil#";
+    char word1[8] = "#ARVY#";
+    char word2[8] = "\"test\"";
+    char numbers[8] = "#2393#";
+
+    rot18(word);
+    assert(strsame("\"Arvy\"",word));
+
+    rot18(numbers);
+    assert(strsame("\"7848\"",numbers));
+
+    rot18(word1);
+    assert(strsame("\"NEIL\"",word1));
+
+    trimfiles(word);
+    assert(strsame("Arvy",word));
+
+    trimfiles(word1);
+    assert(strsame("NEIL",word1));
+
+    trimfiles(word2);
+    assert(strsame("test",word2));
+
+    assert(checkendchar("test", 'e') == 0);
+    assert(checkendchar("test",'"') == 0);
+    assert(checkendchar("tes9",'"') == 0);
+    assert(checkendchar("tes\"",'"') == 1);
+    assert(checkendchar("Ges#",'#') == 1);
+    assert(checkendchar("rand5",'5') == 1);
+
+    assert(countchars("seventeen",'e') == 4);
+    assert(countchars("test",'t') == 2);
+    assert(countchars("#test",'#') == 1);
+    assert(countchars("#test#",'#') == 2);
+    assert(countchars("##",'#') == 2);
+
+    j = 0;
+
+    while(j < TESTVALUE)
+    {
+       i = rnd(); 
+       assert(i<MAXRAND);
+       assert(i>=0);
+       j++;
+    }
+
 }

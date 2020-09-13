@@ -6,69 +6,40 @@
 
 #include "nal.h"
 
-void printgetfile(char** temp);
-
-int main(void)
+int main(int argc, char **argv)
 {
-    int i, j;
-    int counter = 0;
-    Program prog;
-    Master library;
-    Variables usrvars;
-    int newf;
+    static Program prog; Master library; Variables usrvars;
+    int i, newf; char* mainfile; int counter = 0;
     char** c = calloc(1, sizeof(char**)*MAXFILES);
 
-    prog.cw = 0; 
-    library.filecount = 0;
-    usrvars.intcount = 0;
-    usrvars.wrdcount = 0;
+    if(argcheck(argc, argv) == 0)
+    {
+        mainfile = argv[1];
+    }
 
-    /* Test helper functions */
-    testing();
+    prog.cw = library.filecount = 0;
+    usrvars.intcount = usrvars.wrdcount = 0;
 
-    /* Initialise first file */
-    fileclear(PROGNAME, &prog, &library, 0);
-    Prog(&library.files[0], &library, 0, &usrvars, &newf);
+    fileclear(mainfile, &prog, &library);
+    Prog(&library.files[0], &library, PARSE, &usrvars, 
+        &newf);
     getfiles(c, &prog, &counter);
 
     i = 0;
 
+    /* Loop reads and parses each file as
+    it is encountered */
     while(c[i] != NULL)
     {
-        printgetfile(c);
-        fileclear(c[i], &prog, &library,0);
-        Prog(&library.files[i+1], &library, 0, &usrvars, &newf);
+        fileclear(c[i], &prog, &library);
+        Prog(&library.files[i+1], &library, PARSE, 
+            &usrvars, &newf);
         getfiles(c, &prog, &counter);
         i++;
     }
 
-    printf("\n\nParsed OK\n");
-
-    /* Free the filenames */
-    i = 0;
-
-    while(c[i] != NULL)
-    {
-        free(c[i]);
-        i++;
-    }
-
+    printf("Parsed OK\n");
+    freeall(c);
     free(c);
-
     return 0;
 }
-
-void printgetfile(char** temp)
-{
-
-    int i = 0;
-    
-    printf("CUSTOM LOOP \n");
-
-    while(temp[i] != NULL)
-    {
-        printf("%i %s \n", i, temp[i]);
-        i++;
-    }
-}
-

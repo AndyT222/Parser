@@ -1,8 +1,10 @@
-### NAL Parser & Interpreter
+## NAL Parser & Interpreter
 
 A parser and interpreter for a text-based gaming language (Neill’s Adventure Language).
 
-## Grammar
+Test .nal files are included in the test-nal-files folder with escape211.nal being the most complex.
+
+### Grammar
 **The formal grammar for NAL is detailed below:**
 
   &lt;PROGRAM> := "{" lt;INSTRS>
@@ -72,3 +74,8 @@ Some other helpful variable/constant rules:
 &nbsp;&nbsp;&nbsp; e.g. "HELLO.TXT", or a ROT18 string in hashes e.g. #URYYB.GKG#
 
 &nbsp;&nbsp;&nbsp;&lt;NUMCON> := A number e.g. 14.301
+
+### Parsers
+
+
+### Interpreter

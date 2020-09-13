@@ -9,44 +9,40 @@
 
 void printgetfile(char** temp);
 
-int main(void)
+int main(int argc, char **argv)
 {
-    int i;
-    Program prog;
-    Master library;
-    Variables usrvars;
-    int newf;
-
-    int counter = 0;
+    Program prog; Master library; Variables usrvars;
+    int newf = 0; int counter = 0;  int i = 0; char* mainfile;
     char** c = calloc(1, sizeof(char**)*MAXFILES);
 
-    srand(time(0));
-    prog.cw = 0; 
+    prog.cw = library.filecount = usrvars.intcount = usrvars.wrdcount = 0;
 
-    library.filecount = 0;
-    usrvars.intcount = 0;
-    usrvars.wrdcount = 0;
-    
-    /* Test helper functions */
+    if(argv[1] == NULL || argc == 1)
+    {
+        ERROR("No filename entered.");
+    }
+    else{
+        mainfile = argv[1];
+    }
+
+    srand(time(0));
     testing();
 
-    /* Initialise first file */
     printf("DEBUG VERSION. \n");
-    fileclear(PROGNAME, &prog, &library, 1);
+    fileclear(mainfile, &prog, &library);
     getfiles(c, &prog, &counter);
 
     i = 0;
 
     while(c[i] != NULL)
     {
-        fileclear(c[i], &prog, &library,1);
+        printgetfile(c);
+        fileclear(c[i], &prog, &library);
         getfiles(c, &prog, &counter);
         i++;
     }
 
-    Prog(&library.files[0], &library, 1, &usrvars, &newf);
-    
-    printf("DEBUG COMPLETE. \n");
+    Prog(&library.files[0], &library, INTERP, &usrvars, &newf);
 
     /* Free the filenames */
     i = 0;
@@ -67,7 +63,7 @@ void printgetfile(char** temp)
 
     int i = 0;
     
-    printf("CUSTOM LOOP \n");
+    printf("FILES LOADED: \n");
 
     while(temp[i] != NULL)
     {
