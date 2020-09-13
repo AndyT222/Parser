@@ -11,8 +11,8 @@ The formal grammar for NAL is detailed below:
   <JUMP> | <PRINT> | <RND>
 
   
-% Execute the instructions in file, then return here e.g. :
-% FILE "test1.nal"
+Execute the instructions in file, then return here e.g. :
+FILE "test1.nal"
 <FILE> := "FILE" <STRCON>
   
 % Halt/abort all execution right now !
