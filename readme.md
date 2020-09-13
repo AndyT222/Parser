@@ -13,7 +13,7 @@ The formal grammar for NAL is detailed below:
   
 Execute the instructions in file, then return here e.g. :
 FILE "test1.nal"
-<FILE> := "FILE" <STRCON>
+&lt;FILE> := "FILE" &lt;STRCON>
   
 % Halt/abort all execution right now !
 <ABORT> := "ABORT
