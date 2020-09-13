@@ -2,8 +2,8 @@ CFLAGS = -g3 -Wall -Wextra -Werror -Wfloat-equal -pedantic -ansi
 DFLAGS = -g3 -fsanitize=undefined -fsanitize=address
 CC = gcc
 OUTP = interp parse
-SOURCE1 = parse.c nal.c
-SOURCE2 = interp.c nal.c
+SOURCE1 = parse.c nal.c nal.h
+SOURCE2 = interp.c nal.c nal.h
 
 # There are two test versions - explained in testing.txt#
 TEST = testinterp testinterp.c nal.c
