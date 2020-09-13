@@ -28,30 +28,33 @@ Brackets count as one word, "things in quotes" count as one word, e.g. : JUMP 5
 
 &lt;JUMP> := "JUMP"  &lt;NUMCON>
   
-% Output the value of variable, or constant, to screen with (without a linefeed)
- &lt;PRINT> := "PRINT"  &lt;VARCON>
- &lt;PRINTN> := "PRINTN"  &lt;VARCON>
+Output the value of variable, or constant, to screen with (without a linefeed)
+
+&lt;PRINT> := "PRINT"  &lt;VARCON>
+&lt;PRINTN> := "PRINTN"  &lt;VARCON>
   
-% Set a variable to a random number in the range 0 − 99 e.g. :
-% RND ( %N )
-% Number should be seeded via the clock to be different on successive executions
- &lt;RND> := "RND" "("  &lt;NUMVAR> ")"
+Set a variable to a random number in the range 0 − 99 e.g. : RND ( %N )
+Number should be seeded via the clock to be different on successive executions
+
+&lt;RND> := "RND" "("  &lt;NUMVAR> ")"
   
-% If condition/test is true, execute INSTRS after brace, else skip braces
+If condition/test is true, execute INSTRS after brace, else skip braces
+
  &lt;IFCOND> :=  &lt;IFEQUAL> "{"  &lt;INSTRS> |  &lt;IFGREATER> "{"  &lt;INSTRS>
  &lt;IFEQUAL> := "IFEQUAL" "("  &lt;VARCON> ","  &lt;VARCON> ")"
  &lt;IFGREATER> := "IFGREATER" "("  &lt;VARCON> ","  &lt;VARCON> ")"
   
-% Add 1 to a number−variable e.g. :
-% INC ( %ABC )
- &lt;INC> := "INC" "("  &lt;NUMVAR> ")"
+Add 1 to a number−variable e.g. : INC ( %ABC )
+
+&lt;INC> := "INC" "("  &lt;NUMVAR> ")"
   
-% Set a variable. All variables are GLOBAL, and persist across the use of FILE etc.
-% $A = "Hello" or %B = 17.6
- &lt;SET> :=  &lt;VAR> "="  &lt;VARCON>
+Set a variable. All variables are GLOBAL, and persist across the use of FILE etc. $A = "Hello" or %B = 17.6
+
+&lt;SET> :=  &lt;VAR> "="  &lt;VARCON>
   
-% Some helpful variable/constant rules
-% (Here ROT18 is ROT13 for letters and rot5 for digits)
+Some helpful variable/constant rules
+(Here ROT18 is ROT13 for letters and rot5 for digits)
+
  &lt;VARCON> :=  &lt;VAR> |  &lt;CON>
  &lt;VAR> :=  &lt;STRVAR> |  &lt;NUMVAR>
  &lt;CON> :=  &lt;STRCON> |  &lt;NUMCON>
