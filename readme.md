@@ -5,6 +5,7 @@ A parser and interpreter for a text-based gaming language (Neill’s Adventure L
 Test .nal files are included in the test-nal-files folder with escape211.nal being the most complex.
 
 To compile:
+
 	make -f nal.mk
 
 ### Grammar
