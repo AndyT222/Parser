@@ -5,7 +5,7 @@ A parser and interpreter for a text-based gamging language (Neil's Action Langua
 ## Grammar
 The formal grammar for NAL is detailed below:
 
-  <PROGRAM> := "{" <INSTRS>
+  &lt;PROGRAM> := "{" lt;INSTRS>
   <INSTRS> := "}" | <INSTRUCT> <INSTRS>
   <INSTRUCT> := <FILE> | <ABORT> | <INPUT> | <IFCOND> | <INC> | <SET> |
   <JUMP> | <PRINT> | <RND>
@@ -13,6 +13,7 @@ The formal grammar for NAL is detailed below:
   
 Execute the instructions in file, then return here e.g. :
 FILE "test1.nal"
+
 &lt;FILE> := "FILE" &lt;STRCON>
   
 % Halt/abort all execution right now !
