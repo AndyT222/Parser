@@ -7,6 +7,14 @@ Test .nal files are included in the test-nal-files folder with escape211.nal bei
 To compile:
 
 	make -f nal.mk
+	
+.nal files can then be parsed by
+
+	parse filename.nal
+	
+And interpreted by
+
+	interp filename.nal
 
 ### Grammar
 **The formal grammar for NAL is detailed below:**
