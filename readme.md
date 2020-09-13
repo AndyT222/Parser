@@ -52,14 +52,20 @@ Set a variable. All variables are GLOBAL, and persist across the use of FILE etc
 
 &lt;SET> :=  &lt;VAR> "="  &lt;VARCON>
   
-Some helpful variable/constant rules
+Some other helpful variable/constant rules:
 (Here ROT18 is ROT13 for letters and rot5 for digits)
 
  &lt;VARCON> :=  &lt;VAR> |  &lt;CON>
+ 
  &lt;VAR> :=  &lt;STRVAR> |  &lt;NUMVAR>
+ 
  &lt;CON> :=  &lt;STRCON> |  &lt;NUMCON>
+ 
  &lt;STRVAR> := $[A−Z]+
+ 
  &lt;NUMVAR> := %[A−Z]+
+ 
  &lt;STRCON> := A plain−text string in double−quotes, e.g. "HELLO.TXT",
 or a ROT18 string in hashes e.g. #URYYB.GKG#
+
  &lt;NUMCON> := A number e.g. 14.301
