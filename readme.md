@@ -1,6 +1,6 @@
 ### NAL Parser & Interpreter
 
-A parser and interpreter for a text-based gamging language (Neil's Action Language).
+A parser and interpreter for a text-based gaming language (Neill’s Adventure Language).
 
 ## Grammar
 The formal grammar for NAL is detailed below:
@@ -17,16 +17,16 @@ Execute the instructions in file, then return here e.g. : FILE "test1.nal"
   
 Halt/abort all execution right now!
 
-&lt;ABORT> := "ABORT
+&lt;ABORT> := "ABORT"
   
-% Fill a number−variable with a number, or 2 string−variables with string :
-% IN2STR ( $C, $ZER ) or INNUM ( %NV )
- &lt;INPUT> := "IN2STR" "("  &lt;STRVAR> ","  &lt;STRVAR> ")" | "INNUM" "("  &lt;NUMVAR> ")"
+Fill a number−variable with a number, or 2 string−variables with string: IN2STR ( $C, $ZER ) or INNUM ( %NV )
+
+&lt;INPUT> := "IN2STR" "("  &lt;STRVAR> ","  &lt;STRVAR> ")" | "INNUM" "("  &lt;NUMVAR> ")"
   
-% Jump to the nth word in this file (the first word is number zero!)
-% Brackets count as one word, "things in quotes" count as one word, e.g. :
-% JUMP 5
- &lt;JUMP> := "JUMP"  &lt;NUMCON>
+Jump to the nth word in this file (the first word is number zero!)
+Brackets count as one word, "things in quotes" count as one word, e.g. : JUMP 5
+
+&lt;JUMP> := "JUMP"  &lt;NUMCON>
   
 % Output the value of variable, or constant, to screen with (without a linefeed)
  &lt;PRINT> := "PRINT"  &lt;VARCON>
