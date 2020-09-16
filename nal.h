@@ -9,6 +9,7 @@
 #define PARSE           0
 
 #define PROGNAME "escape211.nal"
+#define FOLDER "test-nal-files/"
 
 #define strsame(A,B) (strcmp(A, B)==0)
 #define ERROR(PHRASE) {fprintf(stderr, "Fatal Error %s occured in %s, line %d\n", PHRASE, __FILE__, __LINE__); exit(2); }

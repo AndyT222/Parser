@@ -1,8 +1,0 @@
-{
-
-   PRINT "Hello World! From test1"
-
-   %CNT = 55
-   PRINT %CNT 
-
-}

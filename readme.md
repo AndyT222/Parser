@@ -10,11 +10,11 @@ To compile:
 	
 .nal files can then be parsed by
 
-	parse filename.nal
+	./parse filename.nal
 	
 And interpreted by
 
-	interp filename.nal
+	./interp filename.nal
 
 ### Grammar
 **The formal grammar for NAL is detailed below:**

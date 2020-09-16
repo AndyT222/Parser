@@ -259,7 +259,11 @@ void trimfiles(char* input)
 void fileclear(char* file, Program* prog, Master* library)
 {
     FILE *fp = NULL; int i; char *test;
-    fp = fopen(file, "r");
+    // char* fullFileName = strcat(FOLDER, file);
+    char temp[100] = FOLDER;
+    
+    strcat(temp, file);
+    fp = fopen(temp, "r");
 
     if(fp == NULL)
     {
