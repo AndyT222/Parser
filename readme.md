@@ -87,7 +87,3 @@ Some other helpful variable/constant rules:
 
 &nbsp;&nbsp;&nbsp;&lt;NUMCON> := A number e.g. 14.301
 
-### Parsers
-
-
-### Interpreter
